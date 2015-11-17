@@ -1,0 +1,91 @@
+undup pseudo code
+
+<uid>.<gid>.<mode>.<size> | <cksum.4k> | <cksum>
+
+cksum cache
+<inode> : <mtime>.<uid>.<gid>.<mode>.<size>.<cksum.type>.<cksum.4k>.<cksum.type>.<cksum>
+
+inode index
+<inode> : <cnt (16 bit)>
+<inode>.<nn (16 bit)> : <file-path>
+
+duptable0
+<size>.<uid>.<gid>.<mode> : <cnt (32bit)>,<slots (32bit)>,<inode>[]
+
+duptable1
+<cksum> : <cnt (32bit)>,<slots (32bit)>,<inode>[]
+
+cache-old = gdbm_open cksum-cache-old
+cache-new = gdbm_open cksum-cache-new
+inode-index = gdbm_open inode-index (always create new one)
+init dubtable0
+
+ftab = uthash
+dirs = utarray
+
+
+while (count(dirs) > 0) {
+  cd = pop(dirs)
+  dh = opendir(cd)
+  while (n = readdir(dh)) {
+    if (n == . || n == ..) continue
+    fp = cd + n
+    lstat(fp) || continue
+
+    if (outfp) output catalogue line
+
+    if (is_link(fp) || is_special(fp)) continue
+    if (is_dir(fp) {
+      push ( fp )
+      continue
+    }
+    if (size(fp) == 0) continue
+
+    // Valid cksum cache...
+    add path to inode index (if cnt is not at limit)
+    if (path's inode was known) continue
+    cached-data = dbm_get(cache-old,inode)
+    if (found cached-data && is_valid (mtime,uid,gid,mode,size)) {
+	dbm_put(cache-new,inode,cached-data)
+    }
+    add inode to dup table0 (if dup table entry not full)
+  }
+  closedir(dh)
+}
+
+... sort duptable0 ...
+for items in duptable0 {
+  if (slots in entry == 1) continue
+  duptable1 = uthash
+  for index in duptable0 entry {
+    if (inode in cache-new)
+      use short checksum
+    else {
+      compute short cksum
+      save checksum in cache-new
+    }
+    add inode to duptable1  
+  }
+  for items in duptable1 {
+    if (slots in entry == 1) continue
+    duptable2 = uthash
+    for index in duptable1 entry {
+      if (inode in cache-new && has full checksum)
+	use long checksum
+      else
+	compute full checksum
+	save chekcsumm in cache-new
+      add inode to duptable2
+    }
+    for items in duptable2 {
+      if (slots in entry == 1) continue
+      ... pick oldest i-node entry ...
+      hardlink them
+      update inode index
+    }
+  }
+  
+}
+
+replace cache files
+update inode index file
