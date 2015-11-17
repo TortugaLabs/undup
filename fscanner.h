@@ -23,4 +23,5 @@ void dedup(struct fscanner_dat *fs);
 void fscanner_close(struct fscanner_dat *scandat);
 
 #define DFT_CATFMT "%d %s %03o n:%d u:%d g:%d s:%d b:%d ts:%d %s%s%s\n"
+
 #endif

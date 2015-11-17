@@ -60,3 +60,19 @@ char **inodetab_get(struct inodetab *tab,ino_t ino,time_t *mtime) {
   if (mtime) *mtime = s->mtime;
   return s->paths;
 }
+
+#ifdef XDEBUG
+void inodetab_dump(struct inodetab *tab) {
+  struct _inodedat *s, *tmp;
+  int i;
+  fprintf(stderr,"INODETABLE(%lx): count: %d\n",
+	  (long)tab, HASH_COUNT(tab->hash));
+  HASH_ITER(hh, tab->hash, s, tmp) {
+    fprintf(stderr,"ino:%llx ts:%lld cnt:%d slots:%d\n",
+	    (long long)s->inode, (long long)s->mtime, s->cnt, s->slots);
+    for(i=0; i< s->cnt; i++) {
+      fprintf(stderr,"    %d) %s\n",i, s->paths[i]);
+    }
+  }
+}
+#endif

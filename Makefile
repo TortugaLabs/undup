@@ -6,7 +6,7 @@ CC = $(TARGET)gcc
 LD = $(TARGET)gcc
 AR = $(TARGET)ar
 HOST_TARGET= # --host=$(TARGET)
-CFLAGS = -Wall -O2 -I$(UTHASH_DIR)/src -I$(GDBM_LIBDIR)/src #-DHASH_TYPE=SHA256
+CFLAGS = -DXDEBUG -Wall -O2 -I$(UTHASH_DIR)/src -I$(GDBM_LIBDIR)/src #-DHASH_TYPE=SHA256
 GDBM_VERSION=1.11
 GDBM_LIBDIR=lib/gdbm-$(GDBM_VERSION)
 GDBM_UNPACK=[ -d $(GDBM_LIBDIR) ] || ( cd lib && tar zxf gdbm-$(GDBM_VERSION).tar.gz )

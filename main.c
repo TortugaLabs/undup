@@ -56,9 +56,13 @@ int main(int argc,char **argv) {
 
   root = trimslashes(argv[optind]);
   cache = use_cache ? mystrcat(root,".hcf",NULL) : NULL;
-
+  ckpt(0);
   fscanner_init(&fs, root, cat, cache, hash_type(),dryrun);
+  ckpt(0);
   fscanner(&fs);
+  ckpt(0);
+  inodetab_dump(fs.itab);
+  //duptab_dump(fs.dtab);
   dedup(&fs);
 
   printf("Blocks freed: %d\n", fs.blocks);

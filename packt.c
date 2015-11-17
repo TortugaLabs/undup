@@ -92,12 +92,15 @@ char *_packt(int twice,int *dsize,char *buffer,const char *tpl,...) {
   int repeat;
   long long int8val;
 
+  //ckpt("TPL:%s -- bf:%lx\n",tpl,(long)buffer);
+
   do {
     repeat = false;
     *dsize = 0;
     p = buffer;
     va_start(ap,tpl);
     while (*tpl) {
+      //ckpt("TPL:%c\n",*tpl);
       switch (*tpl++) {
       case '1':
 	intval = va_arg(ap, int);
@@ -116,6 +119,7 @@ char *_packt(int twice,int *dsize,char *buffer,const char *tpl,...) {
 	break;
       case '4':
 	intval = va_arg(ap, int);
+	//ckpt("INT:%d\n",intval);
 	if (buffer) {
 	  *(p++) = (unsigned char)((intval>>24) & 0xff);
 	  *(p++) = (unsigned char)((intval>>16) & 0xff);
@@ -126,6 +130,7 @@ char *_packt(int twice,int *dsize,char *buffer,const char *tpl,...) {
 	break;
       case '8':
 	int8val = va_arg(ap, long long);
+	//ckpt("INT8:%lld\n",int8val);
 	if (buffer) {
 	  *(p++) = (unsigned char)((int8val>>56) & 0xff);
 	  *(p++) = (unsigned char)((int8val>>48) & 0xff);
@@ -172,11 +177,12 @@ char *_packt(int twice,int *dsize,char *buffer,const char *tpl,...) {
       default:
 	fatal(EINVAL,"Invalid template");
       }
-      if (twice) {
-	twice = false;
-	repeat = true;
-	if (buffer == NULL) buffer = mymalloc(*dsize);
-      }
+    }
+    //ckpt(0);
+    if (twice) {
+      twice = false;
+      repeat = true;
+      if (buffer == NULL) buffer = mymalloc(*dsize);
     }
   } while (repeat);
   return buffer;

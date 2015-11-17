@@ -117,3 +117,33 @@ ino_t *duptab_next(struct duptab *tab,int *cnt, struct stat *st) {
   if (tab->iter) tab->iter = tab->iter->hh.next;
   return _duptab_getiter(tab,cnt,st);
 }
+#ifdef XDEBUG
+char *hex(char *dat,int cnt) {
+  static char buf[128];
+  int i;
+  for (i = 0; i < cnt ; i++) {
+    sprintf(buf+(i<<1),"%02x",dat[i]);
+  }
+  buf[i<<1] = 0;
+  return buf;
+}
+
+void duptab_dump(struct duptab *tab) {
+  extern int hash_len();
+  struct _dupentry *s, *tmp;
+  int i;
+  fprintf(stderr,"DUPTABLE(%lx): count: %d\n",
+	  (long)tab, HASH_COUNT(tab->hash));
+  HASH_ITER(hh, tab->hash, s, tmp) {
+    fprintf(stderr,"-id(u:%d,g:%d) sz:%lld m:%03o %s %s (%d/%d)\n",
+	    s->key->uid, s->key->gid, (long long)s->key->size, s->key->mode,
+	    s->key->sflag ? hex(s->key->cksum+1,hash_len()) : "<none>",
+	    s->key->lflag ? hex(s->key->cksum+(1+hash_len()),hash_len()) : "<none>",
+	    s->cnt, s->slots);
+    for(i=0; i< s->cnt; i++) {
+      fprintf(stderr,"    %d) %llx\n",i, (long long)s->inodes[i]);
+    }
+  }
+}
+#endif
+

@@ -85,4 +85,13 @@ static inline char *_mystrcat(const char *file,int line,const char *str,...) {
   _fatal(errcode,__FILE__,__LINE__,fmt , ## __VA_ARGS__)
 #define errorexit(fmt,...) \
   _errorexit(__FILE__,__LINE__,__func__,fmt , ## __VA_ARGS__)
+
+#ifdef XDEBUG
+#define ckpt(msg,...) do {					\
+    fprintf(stderr,"%s,%d(%s): ",__FILE__,__LINE__,__func__);	\
+    fprintf(stderr,msg ? msg : "\n", ## __VA_ARGS__);		\
+  } while(0)
+#else
+#define ckpt(msg,...) ((void)0)
+#endif
 #endif

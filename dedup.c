@@ -34,19 +34,23 @@ static void do_dedup(struct fscanner_dat *fs,ino_t *inos, int icnt,struct stat *
   char **fpt, *basepath, *vpath;
   struct stat stb;
   gfs = fs;
+  ckpt(0);
   qsort(inos,icnt,sizeof(ino_t),dedup_cmp);
+  ckpt("%llx %llx\n", (long long)inos[0],(long long)inos[1]);
 
   fpt = inodetab_get(fs->itab,inos[0],&stp->st_mtime);
   stb.st_ino = inos[0];
 
-  if (fpt == NULL || *fpt==NULL) fatal(ENOENT,"Missing i-node %d",inos[0]);
+  if (fpt == NULL || *fpt==NULL) fatal(ENOENT,"Missing i-node %llx",(long long)inos[0]);
   basepath = mystrcat(fs->root,"/",*fpt,NULL);
-
+  ckpt(0);
   for (i = 1; i < icnt; i++) {
     fpt = inodetab_get(fs->itab,inos[i],&stp->st_mtime);
-    if (fpt == NULL || *fpt==NULL) fatal(ENOENT,"Missing i-node %d",inos[i]);
+    if (fpt == NULL || *fpt==NULL) fatal(ENOENT,"Missing i-node %llx",(long long)inos[i]);
+    ckpt("%llx %s\n",(long long)inos[i],*fpt);
     while (*fpt) {
-      vpath = mystrcat(fs->root,"/",*(fpt++));
+      vpath = mystrcat(fs->root,"/",*(fpt++),NULL);
+      ckpt("%s\n",vpath);
       if (stb.st_ino != inos[i]) {
 	/* Compute statistics... */
 	if (lstat(vpath,&stb) == -1) errorexit("lstat(%s)",vpath);
@@ -75,6 +79,7 @@ static void dedup2b(struct fscanner_dat *fs,struct duptab *dups) {
        inos != NULL ;
        inos = duptab_next(dups,&icnt,&st)) {
     if (icnt < 2) continue;
+    ckpt("%llx (%d)\n",(long long)*inos, icnt);
     do_dedup(fs, inos, icnt, &st);
   }
 }
@@ -85,8 +90,9 @@ static void dedup2a(struct fscanner_dat *fs,ino_t *inos, int icnt,struct stat *s
   char **fpt, *phash, *fhash;
 
   for (i=0; i < icnt; i++) {
+    stp->st_ino = inos[i];
     fpt = inodetab_get(fs->itab,inos[i],&stp->st_mtime);
-    if (fpt == NULL || *fpt==NULL) fatal(ENOENT,"Missing i-node %d",inos[i]);
+    if (fpt == NULL || *fpt==NULL) fatal(ENOENT,"Missing i-node %llx",(long long)inos[i]);
 
     if (fs->cache) {
       hcache_get(fs->cache,stp,&phash,&fhash,hash_len());
@@ -101,8 +107,9 @@ static void dedup2a(struct fscanner_dat *fs,ino_t *inos, int icnt,struct stat *s
     }
     duptab_add(dups, stp, hash_len(), fhash, NULL);
     if (fhash) free(fhash);
-
   }
+  duptab_dump(dups);
+
   dedup2b(fs, dups);
   duptab_free(dups);
 }
@@ -126,8 +133,9 @@ static void dedup1a(struct fscanner_dat *fs,ino_t *inos, int icnt,struct stat *s
   char **fpt, *hash, *ohash;
 
   for (i=0; i < icnt; i++) {
+    stp->st_ino =inos[i];
     fpt = inodetab_get(fs->itab,inos[i],&stp->st_mtime);
-    if (fpt == NULL || *fpt==NULL) fatal(ENOENT,"Missing i-node %d",inos[i]);
+    if (fpt == NULL || *fpt==NULL) fatal(ENOENT,"Missing i-node %llx",(long long)inos[i]);
 
     if (fs->cache) {
       hcache_get(fs->cache,stp,&hash,&ohash,hash_len());
@@ -142,7 +150,6 @@ static void dedup1a(struct fscanner_dat *fs,ino_t *inos, int icnt,struct stat *s
     }
     duptab_add(dups, stp, hash_len(), hash, NULL);
     if (hash) free(hash);
-
   }
   dedup1b(fs, dups);
   duptab_free(dups);
@@ -158,6 +165,7 @@ void dedup(struct fscanner_dat *fs) {
        inodes != NULL ;
        inodes = duptab_next(fs->dtab,&icnt,&st)) {
     if (icnt < 2) continue;
+    ckpt("DEDUP: %llx (%d)\n", (long long)*inodes, icnt);
     dedup1a(fs,inodes,icnt,&st);
   }
 }

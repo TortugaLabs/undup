@@ -64,7 +64,7 @@ void fscanner(struct fscanner_dat *dat) {
 
   utarray_new(dirs, &ut_str_icd);
   utarray_push_back(dirs, &s);
-
+  //ckpt(0);
   while (utarray_len(dirs) > 0) {
     cdir = mystrdup(*((char **)utarray_back(dirs)));
     utarray_pop_back(dirs);
@@ -74,6 +74,7 @@ void fscanner(struct fscanner_dat *dat) {
     if (dh == NULL) errorexit("opendir(%s)",dirpath);
 
     while ((dp = readdir(dh)) != NULL) {
+      //ckpt(0);
       if (dp->d_name[0] == '.'
 	&& (dp->d_name[1] == '\0'
 		|| (dp->d_name[1] == '.' && dp->d_name[2] == '\0'))) continue;
@@ -88,6 +89,7 @@ void fscanner(struct fscanner_dat *dat) {
 		stbuf.st_size, stbuf.st_blocks, stbuf.st_mtime,
 		cdir, cdir[0] ? "/" : "", dp->d_name);
 
+      //ckpt(0);
       if (!S_ISLNK(stbuf.st_mode)) {
 	if (S_ISDIR(stbuf.st_mode) && stbuf.st_dev == rootdev) {
 	  s = mystrcat( cdir,  cdir[0] ? "/" : "", dp->d_name, NULL);
@@ -99,17 +101,23 @@ void fscanner(struct fscanner_dat *dat) {
 			   mystrcat(cdir,cdir[0] ? "/" : "", dp->d_name, NULL),
 			   stbuf.st_nlink, stbuf.st_mtime) == 1) {
 	    // This is a new node
+	    //ckpt(0);
 	    duptab_add(dat->dtab, &stbuf, 0, NULL, NULL);
+	    //ckpt("%lx\n",(long)dat->cache);
 	    // validate cache...
 	    if (dat->cache) hcache_validate(dat->cache, &stbuf);
+	    //ckpt(0);
 	  }
 	}
       }
       free(fpath);
     }
+    //ckpt(0);
     closedir(dh);
     free(dirpath);
     free(cdir);
+    //ckpt(0);
   }
+  //ckpt(0);
   utarray_free(dirs);
 }

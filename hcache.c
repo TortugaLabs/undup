@@ -32,6 +32,11 @@ struct hcache_key {
 
 static datum _hcache_genkey(struct hcache *cache,struct stat *st) {
   datum key;
+  //ckpt("st:%lld %03o/%d %d %d\n",
+  //(long long)st->st_ino,
+  //st->st_mode & ~S_IFMT,st->st_mode & ~S_IFMT,
+  //st->st_uid,
+  //st->st_gid);
   key.dptr = packt(&key.dsize,cache->ktempl,
 		   st->st_ino,
 		   st->st_mode & ~S_IFMT,
@@ -40,6 +45,7 @@ static datum _hcache_genkey(struct hcache *cache,struct stat *st) {
 		   st->st_size,
 		   st->st_mtime,
 		   cache->type);
+  //ckpt(0);
   return key;
 }
 
@@ -98,13 +104,18 @@ void hcache_free(struct hcache *cache) {
 }
 void hcache_validate(struct hcache *cache, struct stat *st) {
   datum key, datum;
+  //ckpt(0);
   _hcache_validate_init(cache);
   if (!cache->dbf) return;
+  //ckpt(0);
   key = _hcache_genkey(cache,st);
+  //ckpt(0);
   datum = gdbm_fetch(cache->dbf, key);
+  //ckpt(0);
   if (datum.dptr == NULL) return;
   if (gdbm_store(cache->validated, key, datum, GDBM_INSERT) == -1)
     fatal(gdbm_errno,"gdbm_store %s", gdbm_strerror(gdbm_errno));
+  //ckpt(0);
   free(datum.dptr);
   free(key.dptr);
 }
