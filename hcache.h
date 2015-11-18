@@ -4,7 +4,7 @@
 #include <sys/stat.h>
 
 struct hcache;
-struct hcache *hcache_new(const char *cachefile,int type);
+struct hcache *hcache_new(const char *base,int type);
 void hcache_free(struct hcache *cache);
 void hcache_validate(struct hcache *cache, struct stat *st);
 int hcache_get(struct hcache *cache, struct stat *st,char **hash);

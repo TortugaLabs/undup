@@ -43,9 +43,7 @@ static inline void fscanner_init(struct fscanner_dat *fs,char *root) {
   fs->dtab = duptab_new();
 
   if (gopts.usecache) {
-    char *cachefile = mystrcat(root,".hcf",NULL);
-    fs->cache = hcache_new(cachefile,hash_type());
-    free(cachefile);
+    fs->cache = hcache_new(root,hash_type());
   } else {
     fs->cache = NULL;
   }

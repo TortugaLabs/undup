@@ -22,8 +22,8 @@ struct hcache_key {
   mode_t mode;
   uid_t uid;
   gid_t gid;
-  time_t mtime;
   off_t size;
+  time_t mtime;
   int cktype;
 };
 // cache_data (byte).short_hash.long_hash
@@ -37,6 +37,7 @@ static datum _hcache_genkey(struct hcache *cache,struct stat *st) {
   //st->st_mode & ~S_IFMT,st->st_mode & ~S_IFMT,
   //st->st_uid,
   //st->st_gid);
+  /*
   key.dptr = packt(&key.dsize,cache->ktempl,
 		   st->st_ino,
 		   st->st_mode & ~S_IFMT,
@@ -45,7 +46,17 @@ static datum _hcache_genkey(struct hcache *cache,struct stat *st) {
 		   st->st_size,
 		   st->st_mtime,
 		   cache->type);
+  */
+  struct hcache_key *sk = mymalloc(sizeof(struct hcache_key));
+  sk->inode = st->st_ino;
+  sk->mode = st->st_mode & ~S_IFMT;
+  sk->uid = st->st_uid;
+  sk->gid = st->st_gid;
+  sk->size = st->st_size;
+  sk->mtime = st->st_mtime;
+  sk->cktype = cache->type;
   //ckpt(0);
+  key.dptr = (char *)sk;
   return key;
 }
 
@@ -60,10 +71,12 @@ static void _hcache_init_ktempl(char *p) {
   *p = 0;
 }
 
-struct hcache *hcache_new(const char *cachefile,int type) {
+struct hcache *hcache_new(const char *base,int type) {
   struct hcache *cache = (struct hcache *)mymalloc(sizeof(struct hcache));
+  char *cachefile = mystrcat(base,".hcd",NULL);
+
   memset(cache,0,sizeof(struct hcache));
-  cache->path = mystrdup(cachefile);
+  cache->path = cachefile;
   cache->dbf = gdbm_open(cachefile,0,GDBM_READER,0666,NULL);
   cache->type = type;
   _hcache_init_ktempl(cache->ktempl);

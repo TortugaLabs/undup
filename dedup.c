@@ -60,9 +60,8 @@ static void do_dedup(struct fscanner_dat *fs,ino_t *inos, int icnt,struct stat *
 	fs->blocks += stb.st_blocks;
       }
       fs->files++;
-      if (gopts.dryrun) {
-	fprintf(stderr,"Linking %s -> %s\n", vpath, basepath);
-      } else {
+      vmsg("Linking %s -> %s\n", vpath, basepath);
+      if (!gopts.dryrun) {
 	if (unlink(vpath)==-1) errorexit("unlink(%s)",vpath);
 	if (link(basepath,vpath)==-1) errorexit("link(%s->%s)",basepath,vpath);
       }
