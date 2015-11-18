@@ -24,30 +24,10 @@ static const char *filetype(int mode) {
   return "???";
 }
 
-void fscanner_init(struct fscanner_dat *dat, char *root, const char *cat,const char *cachefile,int type,int dryrun) {
-  dat->root = root;
-  dat->itab = inodetab_new();
-  dat->dtab = duptab_new();
-  dat->catfmt = DFT_CATFMT;
-  if (cat) {
-    dat->catfp = fopen(cat,"w");
-    if (dat->catfp == NULL) errorexit("%s",cat);
-  } else
-    dat->catfp = NULL;
-  if (cachefile) {
-    dat->cache = hcache_new(cachefile,type);
-  } else {
-    dat->cache = NULL;
-  }
-  dat->blocks = 0;
-  dat->files = 0;
-  dat->dryrun = dryrun;
-}
 
 void fscanner_close(struct fscanner_dat *dat) {
   inodetab_free(dat->itab);
   duptab_free(dat->dtab);
-  if (dat->catfp) fclose(dat->catfp);
   if (dat->cache) hcache_free(dat->cache);
 }
 void fscanner(struct fscanner_dat *dat) {
@@ -82,8 +62,8 @@ void fscanner(struct fscanner_dat *dat) {
       if (lstat(fpath,&stbuf) == -1) errorexit("lstat(%s)",fpath);
 
       // Catalogue line
-      if (dat->catfp && dat->catfmt)
-	fprintf(dat->catfp,dat->catfmt,
+      if (gopts.catfp && gopts.catfmt)
+	fprintf(gopts.catfp,gopts.catfmt,
 		stbuf.st_ino, filetype(stbuf.st_mode), stbuf.st_mode & ~S_IFMT,
 		stbuf.st_nlink, stbuf.st_uid, stbuf.st_gid,
 		stbuf.st_size, stbuf.st_blocks, stbuf.st_mtime,
@@ -102,7 +82,7 @@ void fscanner(struct fscanner_dat *dat) {
 			   stbuf.st_nlink, stbuf.st_mtime) == 1) {
 	    // This is a new node
 	    //ckpt(0);
-	    duptab_add(dat->dtab, &stbuf, 0, NULL, NULL);
+	    duptab_add(dat->dtab, &stbuf, 0, NULL);
 	    //ckpt("%lx\n",(long)dat->cache);
 	    // validate cache...
 	    if (dat->cache) hcache_validate(dat->cache, &stbuf);

@@ -7,8 +7,8 @@ struct hcache;
 struct hcache *hcache_new(const char *cachefile,int type);
 void hcache_free(struct hcache *cache);
 void hcache_validate(struct hcache *cache, struct stat *st);
-int hcache_get(struct hcache *cache, struct stat *st,char **part,char **full,int len);
-void hcache_put(struct hcache *cache, struct stat *st,char *part,char *full,int len);
+int hcache_get(struct hcache *cache, struct stat *st,char **hash);
+void hcache_put(struct hcache *cache, struct stat *st,char *hash,int len);
 void hcache_del(struct hcache *cache, struct stat *st);
 
 

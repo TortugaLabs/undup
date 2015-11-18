@@ -119,52 +119,25 @@ void hcache_validate(struct hcache *cache, struct stat *st) {
   free(datum.dptr);
   free(key.dptr);
 }
-void hcache_put(struct hcache *cache, struct stat *st,char *part,char *full,int len) {
+void hcache_put(struct hcache *cache, struct stat *st,char *hash,int len) {
   datum key, datum;
   _hcache_validate_done(cache);
   key = _hcache_genkey(cache,st);
-  datum.dptr = mymalloc(datum.dsize = 1+len*2);
-  memset(datum.dptr,0,datum.dsize);
-  datum.dptr[0] = (part ? HCACHE_PART : HCACHE_NONE) | (full ? HCACHE_FULL : HCACHE_NONE);
-  if (part) memcpy(datum.dptr+1,part,len);
-  if (full) memcpy(datum.dptr+(1+len),full,len);
+  datum.dptr = hash;
+  datum.dsize = len;
   if (gdbm_store(cache->dbf,key,datum,GDBM_REPLACE) == -1)
     fatal(gdbm_errno,"gdbm_store %s", gdbm_strerror(gdbm_errno));
-  free(datum.dptr);
   free(key.dptr);
 }
 
-int hcache_get(struct hcache *cache, struct stat *st,char **part,char **full,int len) {
-  int res;
+int hcache_get(struct hcache *cache, struct stat *st,char **hash) {
   datum key, datum;
   _hcache_validate_done(cache);
   key = _hcache_genkey(cache,st);
   datum = gdbm_fetch(cache->dbf, key);
   free(key.dptr);
-
-  if (datum.dptr == NULL) {
-    if (part) *part = NULL;
-    if (full) *full = NULL;
-    return 0;
-  }
-  res = datum.dptr[0];
-  if (part) {
-    if ((res & HCACHE_PART) == HCACHE_PART) {
-      *part = mymalloc(len);
-      memcpy(*part,datum.dptr+1,len);
-    } else {
-      *part = NULL;
-    }
-  }
-  if (full) {
-    if ((res & HCACHE_FULL) == HCACHE_FULL) {
-      *full = mymalloc(len);
-      memcpy(*full,datum.dptr+1+len,len);
-    } else {
-      *full = NULL;
-    }
-  }
-  return res;
+  if (hash) *hash = datum.dptr;
+  return datum.dptr == NULL ? 0 : 1;
 }
 
 void hcache_del(struct hcache *cache, struct stat *st) {

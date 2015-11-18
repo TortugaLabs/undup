@@ -5,11 +5,14 @@
 #include "utils.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include "calchash.h"
 #include "hcache.h"
 #include <stdlib.h>
 #include <stdio.h>
+
+#define FIRST_BYTES	4096
 
 struct fscanner_dat *gfs;
 
@@ -57,7 +60,7 @@ static void do_dedup(struct fscanner_dat *fs,ino_t *inos, int icnt,struct stat *
 	fs->blocks += stb.st_blocks;
       }
       fs->files++;
-      if (fs->dryrun) {
+      if (gopts.dryrun) {
 	fprintf(stderr,"Linking %s -> %s\n", vpath, basepath);
       } else {
 	if (unlink(vpath)==-1) errorexit("unlink(%s)",vpath);
@@ -87,7 +90,7 @@ static void dedup2b(struct fscanner_dat *fs,struct duptab *dups) {
 static void dedup2a(struct fscanner_dat *fs,ino_t *inos, int icnt,struct stat *stp) {
   struct duptab *dups = duptab_new();
   int i;
-  char **fpt, *phash, *fhash;
+  char **fpt, *hash, *vn;
 
   for (i=0; i < icnt; i++) {
     stp->st_ino = inos[i];
@@ -95,18 +98,21 @@ static void dedup2a(struct fscanner_dat *fs,ino_t *inos, int icnt,struct stat *s
     if (fpt == NULL || *fpt==NULL) fatal(ENOENT,"Missing i-node %llx",(long long)inos[i]);
 
     if (fs->cache) {
-      hcache_get(fs->cache,stp,&phash,&fhash,hash_len());
-      if (fhash == NULL) {
+      hcache_get(fs->cache,stp,&hash);
+      if (hash == NULL) {
 	// Compute and cache hash
-	fhash = hash_full(*fpt,fs->root);
-	hcache_put(fs->cache,stp,phash,fhash,hash_len());
+	vn = mystrcat(fs->root,"/",*fpt,NULL);
+	hash = hash_file(vn);
+	hcache_put(fs->cache,stp,hash,hash_len());
+	free(vn);
       }
-      if (phash) free(phash);
     } else {
-      fhash = hash_full(*fpt,fs->root);
+      vn = mystrcat(fs->root,"/",*fpt,NULL);
+      hash = hash_file(vn);
+      free(vn);
     }
-    duptab_add(dups, stp, hash_len(), fhash, NULL);
-    if (fhash) free(fhash);
+    duptab_add(dups, stp, hash_len(), hash);
+    if (hash) free(hash);
   }
   duptab_dump(dups);
 
@@ -129,27 +135,26 @@ static void dedup1b(struct fscanner_dat *fs,struct duptab *dups) {
 
 static void dedup1a(struct fscanner_dat *fs,ino_t *inos, int icnt,struct stat *stp) {
   struct duptab *dups = duptab_new();
-  int i;
-  char **fpt, *hash, *ohash;
+  int i, fd, len;
+  char **fpt, *vn, buf[FIRST_BYTES];
 
   for (i=0; i < icnt; i++) {
     stp->st_ino =inos[i];
     fpt = inodetab_get(fs->itab,inos[i],&stp->st_mtime);
     if (fpt == NULL || *fpt==NULL) fatal(ENOENT,"Missing i-node %llx",(long long)inos[i]);
-
-    if (fs->cache) {
-      hcache_get(fs->cache,stp,&hash,&ohash,hash_len());
-      if (hash == NULL) {
-	// Compute and cache hash
-	hash = hash_part(*fpt,fs->root);
-	hcache_put(fs->cache,stp,hash,ohash,hash_len());
+    vn = mystrcat(fs->root,"/",*fpt,NULL);
+    if ((fd = open(vn,O_RDONLY)) != -1) {
+      len = read(fd,buf,FIRST_BYTES);
+      switch (len) {
+      case 0:
+	fatal(ENODATA,"read(%s): no data",vn);
+      case -1:
+	errorexit("read(%s)",vn);
       }
-      if (ohash) free(ohash);
-    } else {
-      hash = hash_part(*fpt,fs->root);
-    }
-    duptab_add(dups, stp, hash_len(), hash, NULL);
-    if (hash) free(hash);
+      close(fd);
+    } else errorexit("open(%s)", vn);
+    free(vn);
+    duptab_add(dups, stp, len, buf);
   }
   dedup1b(fs, dups);
   duptab_free(dups);

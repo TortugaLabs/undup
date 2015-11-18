@@ -10,59 +10,89 @@
 #include "lockfile.h"
 #include "calchash.h"
 
+extern char version[];
+struct opts_t gopts;
+
 char *trimslashes(char *in) {
   int len = strlen(in)-1;
   while (len > 0 && in[len] == '/') in[len--] = '\000';
   return in;
 }
 
-
 int main(int argc,char **argv) {
-  char *cat = NULL, *root, *cache;
-  int mstats = false;
-  int use_cache = false;
-  int dryrun = true;
+  char *root;
   int opt;
   struct fscanner_dat fs;
 
-  while ((opt = getopt(argc,argv,"emCc:l:")) != -1) {
+  gopts_init(&gopts);
+
+  while ((opt = getopt(argc,argv,"h?Vqv5SemCsc:l:")) != -1) {
     switch (opt) {
     case 'c':
-      cat = mystrdup(optarg);
+      gopts.catfp = fopen(optarg,"w");
+      if (!gopts.catfp) perror(optarg);
       break;
     case 'l':
       lockfile(optarg);
       break;
     case 'e':
-      dryrun = false;
+      gopts.dryrun = false;
       break;
     case 'C':
-      use_cache = true;
+      gopts.usecache = false;
       break;
     case 'm':
-      mstats = true;
+      gopts.mstats = true;
       break;
+    case '5':
+      hash_set(MD5);
+      break;
+    case 'S':
+      hash_set(SHA256);
+      break;
+    case 's':
+      gopts.scanonly = true;
+      break;
+    case 'v':
+      gopts.verbose = true;
+      break;
+    case 'q':
+      gopts.verbose = false;
+      break;
+    case 'V':
+      printf("undup v%s\n",version);
+      exit(0);
+    case 'h':
+    case '?':
     default: /* '?' */
       fprintf(stderr,"Usage: %s [options] dir\n", argv[0]);
-      fputs("\t-c catalogue: Create a file catalogue\n",stderr);
-      fputs("\t-l lockfile: Create a exclusive lock\n",stderr);
-      fputs("\t-C: enable hash caching\n",stderr);
+      fputs("\t-c catalogue: create a file catalogue\n",stderr);
+      fputs("\t-l lockfile: create a exclusive lock\n",stderr);
+      fputs("\t-C: disable hash caching\n",stderr);
       fputs("\t-e: execute (disables dry-run mode)\n",stderr);
-      fputs("\t-m: show malloc statistics\n",stderr);
+      fputs("\t-s: scan only\n",stderr);
+      fputs("\t-5: use MD5 hashes\n",stderr);
+      fputs("\t-S: use SHA256 hashes\n",stderr);
+      fputs("\t-q: supress additional info\n",stderr);
+      fputs("\t-v: show additional info\n",stderr);
+      fputs("\t-V: version info\n",stderr);
+      fputs("\t-h|?: this help message\n",stderr);
       exit(EXIT_FAILURE);
     }
   }
   if (optind >= argc) fatal(EXIT_FAILURE,"Expected arguments after options");
 
+  vmsg("Using hash: %s\n", hash_name());
+
   root = trimslashes(argv[optind]);
-  cache = use_cache ? mystrcat(root,".hcf",NULL) : NULL;
-  ckpt(0);
-  fscanner_init(&fs, root, cat, cache, hash_type(),dryrun);
-  ckpt(0);
+  fscanner_init(&fs, root);
   fscanner(&fs);
-  ckpt(0);
   inodetab_dump(fs.itab);
   //duptab_dump(fs.dtab);
+  if (gopts.scanonly) {
+
+    exit(0);
+  }
   dedup(&fs);
 
   printf("Blocks freed: %d\n", fs.blocks);
@@ -70,7 +100,7 @@ int main(int argc,char **argv) {
 
   fscanner_close(&fs);
 
-  if (cache) free(cache);
-  if (mstats) malloc_stats();
+  if (gopts.catfp) fclose(gopts.catfp);
+  if (gopts.mstats) malloc_stats();
   return 0;
 }

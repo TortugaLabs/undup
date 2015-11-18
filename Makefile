@@ -1,6 +1,6 @@
 #_begin := $(shell ./scripts/init.sh)
 
-OBJS := main.o fscanner.o inodetab.o duptable.o packt.o calchash.o dedup.o hcache.o
+OBJS := main.o fscanner.o inodetab.o duptable.o packt.o calchash.o dedup.o hcache.o version.o
 TARGET = #arm-mv5sft-linux-gnueabi
 CC = $(TARGET)gcc
 LD = $(TARGET)gcc

@@ -1,5 +1,6 @@
 #include "duptable.h"
 #include "utils.h"
+#include "calchash.h"
 #include <string.h>
 
 const int SLOTQ = 32;
@@ -9,8 +10,6 @@ struct _dupkey {
   uid_t uid;
   off_t size;
   mode_t mode;
-  int sflag;
-  int lflag;
   char cksum[1];
 };
 
@@ -32,19 +31,18 @@ struct duptab *duptab_new() {
   tab->iter = NULL;
   return tab;
 }
-void duptab_add(struct duptab *tab,struct stat *stdat,int hlen,void *shash,void *lhash) {
+
+void duptab_add(struct duptab *tab,struct stat *stdat,int hlen,void *hash) {
   int ks;
-  struct _dupkey *nkey = mymalloc(ks=sizeof(struct _dupkey)+hlen*2);
+  if (hash == NULL || hlen < 1) hlen = 1;
+  struct _dupkey *nkey = mymalloc(ks=sizeof(struct _dupkey)+hlen-1);
   struct _dupentry *s, *tmp;
   memset(nkey,0,ks);
   nkey->gid = stdat->st_gid;
   nkey->uid = stdat->st_uid;
   nkey->size = stdat->st_size;
   nkey->mode = stdat->st_mode & ~S_IFMT;
-  nkey->sflag = hlen > 0 && shash != NULL ? 1 : 0;
-  nkey->lflag = hlen > 0 && lhash != NULL ? 1 : 0;
-  if (shash) memcpy(nkey->cksum, shash, hlen);
-  if (lhash) memcpy(nkey->cksum + hlen, lhash, hlen);
+  if (hash) memcpy(nkey->cksum, hash, hlen);
 
   HASH_FIND(hh, tab->hash, nkey, ks, s);
   if (s == NULL) {
@@ -118,9 +116,12 @@ ino_t *duptab_next(struct duptab *tab,int *cnt, struct stat *st) {
   return _duptab_getiter(tab,cnt,st);
 }
 #ifdef XDEBUG
-char *hex(char *dat,int cnt) {
+static char *hex(int keylen,char *dat) {
   static char buf[128];
-  int i;
+  int cnt, i;
+  cnt = keylen - sizeof(struct _dupkey) + 1;
+  if (cnt <= 2) return "<none>";
+  if (cnt > 60) cnt = 60;
   for (i = 0; i < cnt ; i++) {
     sprintf(buf+(i<<1),"%02x",dat[i]);
   }
@@ -129,16 +130,14 @@ char *hex(char *dat,int cnt) {
 }
 
 void duptab_dump(struct duptab *tab) {
-  extern int hash_len();
   struct _dupentry *s, *tmp;
   int i;
   fprintf(stderr,"DUPTABLE(%lx): count: %d\n",
 	  (long)tab, HASH_COUNT(tab->hash));
   HASH_ITER(hh, tab->hash, s, tmp) {
-    fprintf(stderr,"-id(u:%d,g:%d) sz:%lld m:%03o %s %s (%d/%d)\n",
+    fprintf(stderr,"-id(u:%d,g:%d) sz:%lld m:%03o %s (%d/%d)\n",
 	    s->key->uid, s->key->gid, (long long)s->key->size, s->key->mode,
-	    s->key->sflag ? hex(s->key->cksum+1,hash_len()) : "<none>",
-	    s->key->lflag ? hex(s->key->cksum+(1+hash_len()),hash_len()) : "<none>",
+	    hex(s->hh.keylen,s->key->cksum),
 	    s->cnt, s->slots);
     for(i=0; i< s->cnt; i++) {
       fprintf(stderr,"    %d) %llx\n",i, (long long)s->inodes[i]);
