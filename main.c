@@ -87,10 +87,12 @@ int main(int argc,char **argv) {
   root = trimslashes(argv[optind]);
   fscanner_init(&fs, root);
   fscanner(&fs);
-  inodetab_dump(fs.itab);
+  //inodetab_dump(fs.itab);
   //duptab_dump(fs.dtab);
   if (gopts.scanonly) {
-
+    if (gopts.catfp) fclose(gopts.catfp);
+    if (gopts.mstats) malloc_stats();
+    fscanner_close(&fs);
     exit(0);
   }
   dedup(&fs);

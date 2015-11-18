@@ -4,10 +4,6 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#define HCACHE_NONE 0x00
-#define HCACHE_PART 0x01
-#define HCACHE_FULL 0x02
-
 struct hcache {
   GDBM_FILE dbf;
   GDBM_FILE validated;
