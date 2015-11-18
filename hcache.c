@@ -1,5 +1,4 @@
 #include "utils.h"
-#include "packt.h"
 #include "hcache.h"
 #include <gdbm.h>
 #include <unistd.h>
@@ -13,7 +12,6 @@ struct hcache {
   GDBM_FILE dbf;
   GDBM_FILE validated;
   char *path;
-  char ktempl[32];
   int type;
 };
 
@@ -32,21 +30,6 @@ struct hcache_key {
 
 static datum _hcache_genkey(struct hcache *cache,struct stat *st) {
   datum key;
-  //ckpt("st:%lld %03o/%d %d %d\n",
-  //(long long)st->st_ino,
-  //st->st_mode & ~S_IFMT,st->st_mode & ~S_IFMT,
-  //st->st_uid,
-  //st->st_gid);
-  /*
-  key.dptr = packt(&key.dsize,cache->ktempl,
-		   st->st_ino,
-		   st->st_mode & ~S_IFMT,
-		   st->st_uid,
-		   st->st_gid,
-		   st->st_size,
-		   st->st_mtime,
-		   cache->type);
-  */
   struct hcache_key *sk = mymalloc(sizeof(struct hcache_key));
   sk->inode = st->st_ino;
   sk->mode = st->st_mode & ~S_IFMT;
@@ -55,20 +38,8 @@ static datum _hcache_genkey(struct hcache *cache,struct stat *st) {
   sk->size = st->st_size;
   sk->mtime = st->st_mtime;
   sk->cktype = cache->type;
-  //ckpt(0);
   key.dptr = (char *)sk;
   return key;
-}
-
-static void _hcache_init_ktempl(char *p) {
-  *(p++) = '0' + sizeof(ino_t);
-  *(p++) = '0' + sizeof(mode_t);
-  *(p++) = '0' + sizeof(uid_t);
-  *(p++) = '0' + sizeof(gid_t);
-  *(p++) = '0' + sizeof(off_t);
-  *(p++) = '0' + sizeof(time_t);
-  *(p++) = '1';
-  *p = 0;
 }
 
 struct hcache *hcache_new(const char *base,int type) {
@@ -79,7 +50,6 @@ struct hcache *hcache_new(const char *base,int type) {
   cache->path = cachefile;
   cache->dbf = gdbm_open(cachefile,0,GDBM_READER,0666,NULL);
   cache->type = type;
-  _hcache_init_ktempl(cache->ktempl);
 
   return cache;
 }
