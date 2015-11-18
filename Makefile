@@ -1,6 +1,12 @@
 #_begin := $(shell ./scripts/init.sh)
 
-OBJS := main.o fscanner.o inodetab.o duptable.o calchash.o dedup.o hcache.o version.o
+MODULES =  # Testable units
+OBJS = $(MODULES:%=%.o) \
+	undup.o fscanner.o inodetab.o duptable.o dedup.o \
+	hcache.o version.o calchash.o
+TESTS = $(MODULES:%=test_%.c)
+APPDRIVERS=main.o
+
 TARGET = #arm-mv5sft-linux-gnueabi
 CC = $(TARGET)gcc
 LD = $(TARGET)gcc
@@ -15,8 +21,11 @@ UTHASH_DIR=lib/uthash-master
 CRYPTO_DIR=lib/crypto-algorithms-master
 
 # link...
-undup: $(LIBDEPS) $(OBJS)
-	$(LD) $(OBJS) -L$(GDBM_LIBDIR) -lgdbm -o undup
+undup: $(LIBDEPS) $(OBJS) $(APPDRIVERS)
+	$(LD) $(APPDRIVERS) $(OBJS) -L$(GDBM_LIBDIR) -lgdbm -o undup
+
+check: $(OBJS)
+	: $(TESTS)
 
 # pull in dependancy...
 -include $(OBJS:.o=.d)
