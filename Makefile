@@ -6,7 +6,7 @@ LD = $(TARGET)gcc
 AR = $(TARGET)ar
 CFG_TARGET= # --host=$(TARGET)
 
-EXTLIBDIR = ../lib/ext
+EXTLIBDIR = lib
 PEDANTIC=-Wall -Wextra -Werror -std=gnu99 -pedantic
 INCDIRS = -I$(CRYPTO_DIR) -I$(UTHASH_DIR)/src
 
@@ -112,4 +112,4 @@ clean:
 	rm -f undup
 
 realclean: clean
-	rm -rf $(GDBM_LIBDIR) _debug _prod undup.1
+	rm -rf $(GDBM_LIBDIR) _debug _prod

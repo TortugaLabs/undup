@@ -1,0 +1,104 @@
+'\" t
+.\"     Title: undup
+.\"    Author: A Liu Ly
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 2015-11-21
+.\"    Manual: User commands
+.\"    Source: undup.c 2.0
+.\"  Language: English
+.\"
+.TH "UNDUP" "1" "2015\-11\-21" "undup\&.c 2\&.0" "User commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+undup \- tracks duplicate files and merges them with hardlinks
+.SH "SYNOPSIS"
+.sp
+\fBundup\fR [options] [directory]
+.SH "DESCRIPTION"
+.sp
+\fBundup\fR examines the contents of a filesystem (directory) searching for file duplicates\&. When found, it saves diskspace by replacing repeated files with hardlinks\&.
+.SH "OPTIONS"
+.PP
+\fB\-c\fR catalogue
+.RS 4
+create a file catalogue
+.RE
+.PP
+\fB\-l\fR lockfile
+.RS 4
+create an exclusive lock (to avoid overruning)
+.RE
+.PP
+\fB\-C\fR
+.RS 4
+disables hash caching
+.RE
+.PP
+\fB\-e\fR
+.RS 4
+creates hardlinks (disables the default, dry\-run mode)
+.RE
+.PP
+\fB\-m\fR
+.RS 4
+Shows memory statistics
+.RE
+.PP
+\fB\-s\fR
+.RS 4
+only scans the file system
+.RE
+.PP
+\fB\-5\fR
+.RS 4
+use MD5 for hashes
+.RE
+.PP
+\fB\-S\fR
+.RS 4
+use SHA256 for hashes
+.RE
+.PP
+\fB\-q\fR
+.RS 4
+quiet mode
+.RE
+.PP
+\fB\-v\fR
+.RS 4
+verbose mode
+.RE
+.PP
+\fB\-V\fR
+.RS 4
+show version info
+.RE
+.PP
+\fB\-h\fR
+.RS 4
+show help information
+.RE
+.SH "AUTHOR"
+.PP
+\fBA Liu Ly\fR
+.RS 4
+Author.
+.RE
