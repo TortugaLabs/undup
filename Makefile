@@ -1,50 +1,115 @@
 #_begin := $(shell ./scripts/init.sh)
 
-MODULES =  # Testable units
-OBJS = $(MODULES:%=%.o) \
-	undup.o fscanner.o inodetab.o duptable.o dedup.o \
-	hcache.o version.o calchash.o
-TESTS = $(MODULES:%=test_%.c)
-APPDRIVERS=main.o
-
 TARGET = #arm-mv5sft-linux-gnueabi
 CC = $(TARGET)gcc
 LD = $(TARGET)gcc
 AR = $(TARGET)ar
-HOST_TARGET= # --host=$(TARGET)
-CFLAGS = -DXDEBUG -Wall -O2 -I$(UTHASH_DIR)/src -I$(GDBM_LIBDIR)/src #-DHASH_TYPE=SHA256
-GDBM_VERSION=1.11
-GDBM_LIBDIR=lib/gdbm-$(GDBM_VERSION)
-GDBM_UNPACK=[ -d $(GDBM_LIBDIR) ] || ( cd lib && tar zxf gdbm-$(GDBM_VERSION).tar.gz )
+CFG_TARGET= # --host=$(TARGET)
+
+EXTLIBDIR = ../lib/ext
+PEDANTIC=-Wall -Wextra -Werror -std=gnu99 -pedantic
+INCDIRS = -I$(CRYPTO_DIR) -I$(UTHASH_DIR)/src
+
+OPTIMIZ = -g -D_DEBUG -Og # Debug build
+#OPTIMIZ = -O3 # Prod build
+
+CFLAGS = $(OPTIMIZ) $(PEDANTIC) $(INCDIRS)
+#-O2 -I$(UTHASH_DIR)/src -I$(GDBM_LIBDIR)/src #-DHASH_TYPE=SHA256
 LIBDEPS = $(GDBM_LIBDIR)/libgdbm.a
-UTHASH_DIR=lib/uthash-master
-CRYPTO_DIR=lib/crypto-algorithms-master
 
-# link...
-undup: $(LIBDEPS) $(OBJS) $(APPDRIVERS)
-	$(LD) $(APPDRIVERS) $(OBJS) -L$(GDBM_LIBDIR) -lgdbm -o undup
+GDBM_VERSION=1.11
+GDBM_LIBDIR=$(EXTLIBDIR)/gdbm-$(GDBM_VERSION)
+GDBM_UNPACK=[ -d $(GDBM_LIBDIR) ] || ( cd $(EXTLIBDIR) && tar zxf gdbm-$(GDBM_VERSION).tar.gz )
 
-check: $(OBJS)
-	: $(TESTS)
+UTHASH_DIR = $(EXTLIBDIR)/uthash
+CRYPTO_DIR = $(EXTLIBDIR)/crypto-algorithms
+CU_DIR = $(EXTLIBDIR)/cu
+CU_CFLAGS = -I$(CU_DIR)
+
+OBJS = utils.o calchash.o inodetab.o duptable.o hcache.o \
+	undup.o fscanner.o dedup.o
+TESTS = $(shell for f in $(OBJS:%.o=%-t.c) ; do [ -f $$f ] && echo $$f ; done)
+# MTRACE = env MALLOC_TRACE=mtrace.data
+
+help:
+	@echo "Use:"
+	@echo "	make prod - production version"
+	@echo "	make debug - debugging/development version"
+	@echo "	make check - run tests"
+
+all: undup undup.1
+
+prod:
+	# This macro checks that we have do not have debug build stuff
+	# and/or using the correct target architecture
+	if [ -f _debug ] ; then  make realclean ; fi
+	t=$(TARGET) ; [ -z "$$t" ] && t=`uname -m` ; \
+		if [ -f _prod ] ; then \
+		  c=$$(cat _prod) ; \
+		  [ x"$c" != x"$t" ] && make realclean ; \
+		fi ; \
+		echo $$t > _prod
+	make OPTIMIZ=-O3 all
+
+debug:
+	# This macro checks that we have do not have prod build stuff
+	# and/or using the correct target architecture
+	if [ -f _prod ] ; then  make realclean ; fi
+	t=$(TARGET) ; [ -z "$$t" ] && t=`uname -m` ; \
+		if [ -f _debug ] ; then \
+		  c=$$(cat _debug) ; \
+		  [ x"$c" != x"$t" ] && make realclean ; \
+		fi ; \
+		echo $$t > _debug
+	make all
+
+undup.1: undup.c
+	manify undup.c
+
+check:
+	# This macro checks that we have do not have prod build stuff
+	# and/or using the correct target architecture
+	if [ -f _prod ] ; then  make realclean ; fi
+	t=$(TARGET) ; [ -z "$$t" ] && t=`uname -m` ; \
+		if [ -f _debug ] ; then \
+		  c=$$(cat _debug) ; \
+		  [ x"$c" != x"$t" ] && make realclean ; \
+		fi ; \
+		echo $$t > _debug
+	make _check
+
+_check: test
+	[ -d regressions ] || mkdir regressions
+	$(MTRACE) ./test
+	$(CU_DIR)/cu-check-regressions regressions
+
+test: test.c $(OBJS) $(TESTS) $(GDBM_LIBDIR)/libgdbm.a
+	./scripts/gentests -o cu-t.h $(TESTS)
+	$(CC) $(CFLAGS) $(CU_CFLAGS) -o test \
+		test.c $(OBJS) $(TESTS) $(GDBM_LIBDIR)/libgdbm.a
+
+undup: $(OBJS) main.o $(GDBM_LIBDIR)/libgdbm.a
+	$(CC) $(CFLAGS) -o undup main.o $(OBJS) $(GDBM_LIBDIR)/libgdbm.a
 
 # pull in dependancy...
 -include $(OBJS:.o=.d)
 
-# compile and generate dependancy info
 %.o: %.c
+	# Make sure other sources are there...
 	$(GDBM_UNPACK)
-	[ -d $(UTHASH_DIR) ] || ( cd lib && unzip -q uthash-master.zip )
-	[ -d $(CRYPTO_DIR) ] || ( cd lib && unzip -q crypto-algorithms-master.zip )
+	# compile and generate dependancy info
 	$(CC) -c $(CFLAGS) $*.c -o $*.o
 	$(CC) -MM $(CFLAGS) $*.c > $*.d
 
 $(GDBM_LIBDIR)/libgdbm.a:
 	$(GDBM_UNPACK)
-	cd $(GDBM_LIBDIR) && ./configure $(HOST_TARGET) && make
+	cd $(GDBM_LIBDIR) && ./configure $(CFG_TARGET) && make
 	cd $(GDBM_LIBDIR) && $(AR) cr libgdbm.a src/*.o
 
 clean:
-	rm -f undup *.o *.d
+	rm -f *.o *.d mtrace.data
+	rm -f test cu-t.h regressions/tmp.*
+	rm -f undup
 
 realclean: clean
-	rm -rf $(GDBM_LIBDIR) $(UTHASH_DIR) $(CRYPTO_DIR)
+	rm -rf $(GDBM_LIBDIR) _debug _prod undup.1

@@ -5,14 +5,15 @@
 
 struct duptab;
 struct duptab *duptab_new();
-void duptab_free(struct duptab *tab);
+struct duptab *duptab_free(struct duptab *tab);
 void duptab_add(struct duptab *tab,struct stat *stdat,int hlen,void *hash);
 void duptab_sort(struct duptab *tab);
+int duptab_count(struct duptab *tab);
 
 ino_t *duptab_first(struct duptab *tab,int *cnt,struct stat *st);
 ino_t *duptab_next(struct duptab *tab,int *cnt, struct stat *st);
 
-#ifdef XDEBUG
+#ifdef _DEBUG
 void duptab_dump(struct duptab *tab);
 #else
 #define duptab_dump(tab) ((void)0)

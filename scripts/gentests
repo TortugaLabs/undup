@@ -1,0 +1,40 @@
+#!/usr/bin/perl -w
+
+my $output = undef;
+while (scalar(@ARGV)) {
+    if ($ARGV[0] eq '-o') {
+	shift @ARGV;
+	$output = $ARGV[0];
+	die("Missing file for -o\n") if (!defined($output)) ;
+    } else {
+	last;
+    }
+    shift @ARGV;
+}
+die("No output file specified\n") if (!defined($output)) ;
+
+my $main = "// Collect all test suites\nTEST_SUITES {\n";
+foreach my $tfile (@ARGV) {
+    open(my $th,'<',$tfile) || die("$tfile: $!\n");
+    my $suite = substr($tfile,0,length($tfile)-4);
+    $decl .= "// Tests for $suite\n";
+    $main .= "    TEST_SUITE_ADD($suite),\n";
+    my $txt = "// Declare suite for $suite\nTEST_SUITE($suite) {\n";
+    while (<$th>) {
+	if (/^\s*TEST\s*\((.*)\)/) {
+	    my $ut = $1;
+	    #print "found: $ut in $suite\n";
+	    $decl .= "TEST($ut);\n";
+	    $txt .= "    TEST_ADD($ut),\n";
+	}
+    }
+    close($th);
+    $decl .= $txt;
+    $decl .= "    TEST_SUITE_CLOSURE\n};\n";
+}
+$main .= "    TEST_SUITES_CLOSURE\n};\n";
+
+open(my $out,'>',$output) || die("$output: $!\n");
+print $out $decl;
+print $out $main;
+close($out);

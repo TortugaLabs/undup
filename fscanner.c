@@ -4,33 +4,30 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "fscanner.h"
+#include "undup.h"
+#include "calchash.h"
+#include <utarray.h>
 
 static dev_t getfiledev(const char *f) {
   struct stat stbuf;
-  if (stat(f,&stbuf) == -1) errorexit("lstat(%s)",f);
+  if (stat(f,&stbuf) == -1) errormsg("lstat(%s)",f);
   return stbuf.st_dev;
 }
 
-static const char *filetype(int mode) {
-  switch (mode & S_IFMT) {
-  case S_IFSOCK: return "soc";
-  case S_IFLNK: return "lnk";
-  case S_IFREG: return "reg";
-  case S_IFBLK: return "blk";
-  case S_IFDIR: return "dir";
-  case S_IFCHR: return "chr";
-  case S_IFIFO: return "pip";
-  }
-  return "???";
+void fscanner_init(struct fs_dat *fs,char *root,int usecache) {
+  fs->root = root;
+  fs->itab = inodetab_new();
+  fs->dtab = duptab_new();
+  fs->cache = usecache ? hcache_new(root,hash_type(),hash_len()) : NULL;
 }
 
-
-void fscanner_close(struct fscanner_dat *dat) {
-  inodetab_free(dat->itab);
-  duptab_free(dat->dtab);
-  if (dat->cache) hcache_free(dat->cache);
+void fscanner_close(struct fs_dat *dat) {
+  if (dat->itab) dat->itab = inodetab_free(dat->itab);
+  if (dat->dtab) dat->dtab = duptab_free(dat->dtab);
+  if (dat->cache) dat->cache = hcache_free(dat->cache);
 }
-void fscanner(struct fscanner_dat *dat) {
+
+void fscanner(struct fs_dat *dat, struct cat_cb *cb) {
   const char *root = dat->root;
   UT_array *dirs;
   char *s = "";
@@ -49,37 +46,34 @@ void fscanner(struct fscanner_dat *dat) {
     cdir = mystrdup(*((char **)utarray_back(dirs)));
     utarray_pop_back(dirs);
 
-    dirpath = mystrcat( root , cdir[0] ? "/" : "", cdir, NULL);
+    dirpath = mystrcat( root , cdir[0] ? "/" : "", cdir);
     dh = opendir(dirpath);
-    if (dh == NULL) errorexit("opendir(%s)",dirpath);
+    if (dh == NULL) errormsg("opendir(%s)",dirpath);
 
     while ((dp = readdir(dh)) != NULL) {
       //ckpt(0);
       if (dp->d_name[0] == '.'
 	&& (dp->d_name[1] == '\0'
 		|| (dp->d_name[1] == '.' && dp->d_name[2] == '\0'))) continue;
-      fpath = mystrcat(dirpath, "/", dp->d_name , NULL);
-      if (lstat(fpath,&stbuf) == -1) errorexit("lstat(%s)",fpath);
+      fpath = mystrcat(dirpath, "/", dp->d_name);
+      if (lstat(fpath,&stbuf) == -1) errormsg("lstat(%s)",fpath);
 
       // Catalogue line
-      if (gopts.catfp && gopts.catfmt)
-	fprintf(gopts.catfp,gopts.catfmt,
-		stbuf.st_ino, filetype(stbuf.st_mode), stbuf.st_mode & ~S_IFMT,
-		stbuf.st_nlink, stbuf.st_uid, stbuf.st_gid,
-		stbuf.st_size, stbuf.st_blocks, stbuf.st_mtime,
-		cdir, cdir[0] ? "/" : "", dp->d_name);
-
+      if (cb) cb->callback(cdir, dp->d_name, &stbuf, cb->ext);
       //ckpt(0);
       if (!S_ISLNK(stbuf.st_mode)) {
 	if (S_ISDIR(stbuf.st_mode) && stbuf.st_dev == rootdev) {
-	  s = mystrcat( cdir,  cdir[0] ? "/" : "", dp->d_name, NULL);
+	  s = mystrcat( cdir,  cdir[0] ? "/" : "", dp->d_name);
 	  utarray_push_back(dirs, &s);
 	  free(s);
 	} else if (S_ISREG(stbuf.st_mode)) {
+	  char *p;
 	  if (stbuf.st_size == 0) continue;
-	  if (inodetab_add(dat->itab, stbuf.st_ino,
-			   mystrcat(cdir,cdir[0] ? "/" : "", dp->d_name, NULL),
-			   stbuf.st_nlink, stbuf.st_mtime) == 1) {
+	  int i = inodetab_add(dat->itab, stbuf.st_ino,
+			       p = mystrcat(cdir,cdir[0] ?"/" : "", dp->d_name),
+			       stbuf.st_nlink, stbuf.st_mtime);
+	  free(p);
+	  if (i == 1) {
 	    // This is a new node
 	    //ckpt(0);
 	    duptab_add(dat->dtab, &stbuf, 0, NULL);

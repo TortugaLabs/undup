@@ -4,12 +4,11 @@
 #include <sys/stat.h>
 
 struct hcache;
-struct hcache *hcache_new(const char *base,int type);
-void hcache_free(struct hcache *cache);
+struct hcache *hcache_new(const char *base,int type,int len);
+struct hcache *hcache_free(struct hcache *cache);
 void hcache_validate(struct hcache *cache, struct stat *st);
 int hcache_get(struct hcache *cache, struct stat *st,char **hash);
-void hcache_put(struct hcache *cache, struct stat *st,char *hash,int len);
+void hcache_put(struct hcache *cache, struct stat *st,char *hash);
 void hcache_del(struct hcache *cache, struct stat *st);
-
-
+const char *hcache_getpath(struct hcache *cache);
 #endif

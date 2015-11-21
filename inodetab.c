@@ -1,6 +1,7 @@
 #include "inodetab.h"
 #include "utils.h"
 #include <string.h>
+#include <uthash.h>
 
 //
 // Implemented using UTHASH
@@ -22,7 +23,7 @@ struct inodetab *inodetab_new() {
   tab->hash = NULL;
   return tab;
 }
-void inodetab_free(struct inodetab *tab) {
+struct inodetab *inodetab_free(struct inodetab *tab) {
   struct _inodedat *s, *tmp;
   int i;
   HASH_ITER(hh, tab->hash, s, tmp) {
@@ -31,6 +32,7 @@ void inodetab_free(struct inodetab *tab) {
     free(s);
   }
   free(tab);
+  return NULL;
 }
 int inodetab_add(struct inodetab *tab,ino_t ino,char *fpath,int nlnks,time_t mtime) {
   struct _inodedat *s;
@@ -45,7 +47,7 @@ int inodetab_add(struct inodetab *tab,ino_t ino,char *fpath,int nlnks,time_t mti
     HASH_ADD_INT(tab->hash, inode, s);
   }
   if (s->cnt < s->slots) {
-    s->paths[s->cnt++] = fpath;
+    s->paths[s->cnt++] = mystrdup(fpath);
   } else {
     fatal(EXIT_FAILURE,"%s: links exceeded slots (%d)", fpath, s->slots);
   }
@@ -61,17 +63,20 @@ char **inodetab_get(struct inodetab *tab,ino_t ino,time_t *mtime) {
   return s->paths;
 }
 
-#ifdef XDEBUG
+int inodetab_count(struct inodetab *tab) {
+  return HASH_COUNT(tab->hash);
+}
+
+#ifdef _DEBUG
 void inodetab_dump(struct inodetab *tab) {
   struct _inodedat *s, *tmp;
   int i;
-  fprintf(stderr,"INODETABLE(%lx): count: %d\n",
-	  (long)tab, HASH_COUNT(tab->hash));
+  fprintf(stdout,"INODETABLE: count: %d\n", HASH_COUNT(tab->hash));
   HASH_ITER(hh, tab->hash, s, tmp) {
-    fprintf(stderr,"ino:%llx ts:%lld cnt:%d slots:%d\n",
+    fprintf(stdout,"ino:%llx ts:%lld cnt:%d slots:%d\n",
 	    (long long)s->inode, (long long)s->mtime, s->cnt, s->slots);
     for(i=0; i< s->cnt; i++) {
-      fprintf(stderr,"    %d) %s\n",i, s->paths[i]);
+      fprintf(stdout,"    %d) %s\n",i, s->paths[i]);
     }
   }
 }

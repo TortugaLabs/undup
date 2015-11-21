@@ -6,104 +6,80 @@
 #include <unistd.h>
 #include <string.h>
 
-#ifndef HASH_TYPE
-#define HASH_TYPE MD5
-#endif
-
-//////////////////////////////////////////////////////////////////////
-//
-// Implements MD5
-//
-//////////////////////////////////////////////////////////////////////
-#include "lib/crypto-algorithms-master/md5.h"
-#include "lib/crypto-algorithms-master/md5.c"
-#define MD5_HLEN 16
-
-struct md5_hash_ctx {
-  MD5_CTX c;
-};
-static char md5_name[] = "md5";
-
-static struct hash_ctx *md5_hash_new() {
-  struct md5_hash_ctx *ctx = mymalloc(sizeof(struct md5_hash_ctx));
-  memset(ctx,0,sizeof(struct md5_hash_ctx));
-  md5_init(&(ctx->c));
-  return (struct hash_ctx *)ctx;
-}
-
-static void md5_hash_update(struct hash_ctx *ctxp,char *data,int len) {
-  struct md5_hash_ctx *ctx = (struct md5_hash_ctx *)ctxp;
-  md5_update(&ctx->c,(BYTE *)data,len);
-}
-static void md5_hash_free(struct hash_ctx *ctxp, char *hash) {
-  struct md5_hash_ctx *ctx = (struct md5_hash_ctx *)ctxp;
-  if (hash) md5_final(&ctx->c,(BYTE *)hash);
-  free(ctx);
-}
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// Implements SHA256/SHA2
-//
-//////////////////////////////////////////////////////////////////////
-//
-// Implements SHA-256 (SHA-2)
-//
+#define BYTE MD2_BYTE
+#define WORD MD2_WORD
+#include <md2.h>
+#include <md2.c>
+#undef BYTE
+#undef WORD
+#define BYTE MD5_BYTE
+#define WORD MD5_WORD
+#include <md5.h>
+#include <md5.c>
+#undef BYTE
+#undef WORD
 #undef ROTLEFT
-#include "lib/crypto-algorithms-master/sha256.h"
-#include "lib/crypto-algorithms-master/sha256.c"
-#define SHA256_HLEN 32
+#define BYTE SHA1_BYTE
+#define WORD SHA1_WORD
+#include <sha1.h>
+#include <sha1.c>
+#undef BYTE
+#undef WORD
+#undef ROTLEFT
+#define BYTE SHA256_BYTE
+#define WORD SHA256_WORD
+#include <sha256.h>
+#include <sha256.c>
 
-struct sha256_hash_ctx {
-  SHA256_CTX c;
-};
+#define declare_hash(type,id,libctx,bs)					\
+  struct ctx_ ## id {							\
+    libctx c;								\
+  };									\
+  static char id ## _name[] = #id;					\
+  static struct hash_ctx * id ## _hash_new() {				\
+    struct ctx_ ## id *ctx = mymalloc(sizeof(struct ctx_ ## id));	\
+    memset(ctx,0,sizeof(struct ctx_ ## id));				\
+    id ## _init(&(ctx->c));						\
+    return (struct hash_ctx *)ctx;					\
+  }									\
+  static void id ## _hash_update(struct hash_ctx *cp, char *data,int len) { \
+    struct ctx_ ## id *ctx = (struct ctx_ ## id *)cp;			\
+    id ## _update(&ctx->c,(BYTE *)data,len);				\
+  }									\
+  static void id ## _hash_free(struct hash_ctx *cp, char *hash) {	\
+    struct ctx_ ## id *ctx = (struct ctx_ ## id *)cp;			\
+    if(hash) id ## _final(&ctx->c,(BYTE *)hash);			\
+    free(ctx);								\
+  }									\
+  static void id ## _hash_init(struct IHash *p) {			\
+    p->hash_type = type;						\
+    p->hash_len = bs;							\
+    p->hash_new_fn = id ## _hash_new;					\
+    p->hash_update_fn = id ## _hash_update;				\
+    p->hash_free_fn = id ## _hash_free;					\
+    p->hash_name = id ## _name;						\
+  }
 
-static char sha256_name[] = "SHA256";
-
-static struct hash_ctx *sha256_hash_new() {
-  struct sha256_hash_ctx *ctx = mymalloc(sizeof(struct sha256_hash_ctx));
-  memset(ctx,0,sizeof(struct sha256_hash_ctx));
-  sha256_init(&ctx->c);
-  return (struct hash_ctx *)ctx;
-}
-static void sha256_hash_update(struct hash_ctx *ctxp,char *data,int len) {
-  struct sha256_hash_ctx *ctx = (struct sha256_hash_ctx *)ctxp;
-  sha256_update(&ctx->c,(BYTE *)data,len);
-}
-static void sha256_hash_free(struct hash_ctx *ctxp, char *hash) {
-  struct sha256_hash_ctx *ctx = (struct sha256_hash_ctx *)ctxp;
-  if (hash) sha256_final(&ctx->c,(BYTE *)hash);
-  free(ctx);
-}
 //////////////////////////////////////////////////////////////////////
-
-struct IHash calchash = {
-  .hash_type = MD5,
-  .hash_len = MD5_HLEN,
-  .hash_new_fn = md5_hash_new,
-  .hash_update_fn = md5_hash_update,
-  .hash_free_fn = md5_hash_free,
-  .hash_name = md5_name,
-};
-
+declare_hash(CH_MD2, md2, MD2_CTX, MD2_BLOCK_SIZE)
+declare_hash(CH_MD5, md5, MD5_CTX, MD5_BLOCK_SIZE)
+declare_hash(CH_SHA256, sha256, SHA256_CTX, SHA256_BLOCK_SIZE)
+declare_hash(CH_SHA1, sha1, SHA1_CTX, SHA1_BLOCK_SIZE)
+//////////////////////////////////////////////////////////////////////
+struct IHash calchash;
 void hash_set(int type) {
   switch (type) {
-  case MD5:
-    calchash.hash_type = MD5;
-    calchash.hash_len = MD5_HLEN;
-    calchash.hash_new_fn = md5_hash_new;
-    calchash.hash_update_fn = md5_hash_update;
-    calchash.hash_free_fn = md5_hash_free;
-    calchash.hash_name = md5_name;
+  case CH_MD2:
+    md2_hash_init(&calchash);
     break;
-  case SHA256:
-    calchash.hash_type = SHA256;
-    calchash.hash_len = SHA256_HLEN;
-    calchash.hash_new_fn = sha256_hash_new;
-    calchash.hash_update_fn = sha256_hash_update;
-    calchash.hash_free_fn = sha256_hash_free;
-    calchash.hash_name = sha256_name;
+  case CH_MD5:
+    md5_hash_init(&calchash);
+    break;
+  case CH_SHA1:
+    sha1_hash_init(&calchash);
+    break;
+  case CH_SHA256:
+    sha256_hash_init(&calchash);
     break;
   default:
     fatal(EINVAL,"Invalid hash type %x\n", type);
@@ -111,17 +87,19 @@ void hash_set(int type) {
 }
 
 //////////////////////////////////////////////////////////////////////
+#define _HASH_BUFSZ 4096
+
 char *hash_file(const char *file) {
   int fd, cnt;
   struct hash_ctx *ctx;
   char buf[_HASH_BUFSZ], *res;
 
   fd = open(file, O_RDONLY);
-  if (fd == -1) errorexit("open(%s)", file);
+  if (fd == -1) errormsg("open(%s)", file);
 
   ctx = hash_new();
-  while ((cnt = read(fd,buf,sizeof buf)) == 0) {
-    if (cnt == -1) errorexit("read(%s)",file);
+  while ((cnt = read(fd,buf,sizeof buf)) > 0) {
+    if (cnt == -1) errormsg("read(%s)",file);
     hash_update(ctx, buf, cnt);
   }
   res = mymalloc(hash_len());

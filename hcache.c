@@ -9,6 +9,7 @@ struct hcache {
   GDBM_FILE validated;
   char *path;
   int type;
+  int hlen;
 };
 
 struct hcache_key {
@@ -20,13 +21,11 @@ struct hcache_key {
   time_t mtime;
   int cktype;
 };
-// cache_data (byte).short_hash.long_hash
-//<inode> : <mtime>.<uid>.<gid>.<mode>.<size>.<cksum.type>.<cksum.4k>.<cksum.type>.<cksum>
-//<uid>.<gid>.<mode>.<size> | <cksum.4k> | <cksum>
 
 static datum _hcache_genkey(struct hcache *cache,struct stat *st) {
   datum key;
   struct hcache_key *sk = mymalloc(sizeof(struct hcache_key));
+  key.dsize = sizeof(struct hcache_key);
   sk->inode = st->st_ino;
   sk->mode = st->st_mode & ~S_IFMT;
   sk->uid = st->st_uid;
@@ -38,14 +37,19 @@ static datum _hcache_genkey(struct hcache *cache,struct stat *st) {
   return key;
 }
 
-struct hcache *hcache_new(const char *base,int type) {
+const char *hcache_getpath(struct hcache *cache) {
+  return cache->path;
+}
+
+struct hcache *hcache_new(const char *base,int type,int len) {
   struct hcache *cache = (struct hcache *)mymalloc(sizeof(struct hcache));
-  char *cachefile = mystrcat(base,".hcd",NULL);
+  char *cachefile = mystrcat(base,".hcd");
 
   memset(cache,0,sizeof(struct hcache));
   cache->path = cachefile;
   cache->dbf = gdbm_open(cachefile,0,GDBM_READER,0666,NULL);
   cache->type = type;
+  cache->hlen = len;
 
   return cache;
 }
@@ -54,13 +58,13 @@ static void _hcache_validate_done(struct hcache *cache) {
   char *vfname;
   if (!cache->validated) return;
   gdbm_close(cache->validated);
-  vfname = mystrcat(cache->path,".validate",NULL);
+  vfname = mystrcat(cache->path,".validate");
   if (cache->dbf) {
     gdbm_close(cache->dbf);
     unlink(cache->path);
   }
   if (rename(vfname,cache->path) == -1)
-    errorexit("rename(%s->%s)",vfname, cache->path);
+    errormsg("rename(%s->%s)",vfname, cache->path);
   free(vfname);
   cache->validated = NULL;
   cache->dbf = gdbm_open(cache->path,0, GDBM_WRITER, 0666,NULL);
@@ -68,18 +72,19 @@ static void _hcache_validate_done(struct hcache *cache) {
 static void _hcache_validate_init(struct hcache *cache) {
   char *vfname;
   if (cache->validated) return;
-  vfname = mystrcat(cache->path,".validate",NULL);
+  vfname = mystrcat(cache->path,".validate");
   cache->validated = gdbm_open(vfname,0, GDBM_NEWDB, 0666,NULL);
   if (!cache->validated)
     fatal(gdbm_errno,"gdbmopen(%s): %s", vfname, gdbm_strerror(gdbm_errno));
   free(vfname);
 }
 
-void hcache_free(struct hcache *cache) {
+struct hcache *hcache_free(struct hcache *cache) {
   _hcache_validate_done(cache);
   if (cache->dbf) gdbm_close(cache->dbf);
   free(cache->path);
   free(cache);
+  return NULL;
 }
 void hcache_validate(struct hcache *cache, struct stat *st) {
   datum key, datum;
@@ -98,15 +103,24 @@ void hcache_validate(struct hcache *cache, struct stat *st) {
   free(datum.dptr);
   free(key.dptr);
 }
-void hcache_put(struct hcache *cache, struct stat *st,char *hash,int len) {
+void hcache_put(struct hcache *cache, struct stat *st,char *hash) {
   datum key, datum;
+  //ckpt();
   _hcache_validate_done(cache);
   key = _hcache_genkey(cache,st);
+  //ckptm(">>");
+  //printhex(stderr,key.dptr,key.dsize,0);
+  //ckptm("\n");
+
   datum.dptr = hash;
-  datum.dsize = len;
+  datum.dsize = cache->hlen;
+  //ckpt();
+  //ckptm("hash=%s, len=%d\n",hash,cache->hlen);
   if (gdbm_store(cache->dbf,key,datum,GDBM_REPLACE) == -1)
     fatal(gdbm_errno,"gdbm_store %s", gdbm_strerror(gdbm_errno));
+  //ckpt();
   free(key.dptr);
+  //ckpt();
 }
 
 int hcache_get(struct hcache *cache, struct stat *st,char **hash) {
@@ -116,7 +130,7 @@ int hcache_get(struct hcache *cache, struct stat *st,char **hash) {
   datum = gdbm_fetch(cache->dbf, key);
   free(key.dptr);
   if (hash) *hash = datum.dptr;
-  return datum.dptr == NULL ? 0 : 1;
+  return datum.dptr != NULL;
 }
 
 void hcache_del(struct hcache *cache, struct stat *st) {

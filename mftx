@@ -1,0 +1,4 @@
+#!/usr/bin/env mftx
+lib/uthash		https://github.com/troydhanson/uthash.git
+lib/cu			https://github.com/danfis/cu.git
+lib/crypto-algorithms	https://github.com/B-Con/crypto-algorithms.git

@@ -5,9 +5,12 @@
 #define _UTILS_H
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/file.h>
 
 #ifndef true
 #define true 1
@@ -16,82 +19,96 @@
 #define false 0
 #endif
 
-#define oom() _errorexit(__FILE__,__LINE__,__func__,NULL)
-#define uthash_fatal(msg) _fatal(EXIT_FAILURE,__FILE__,__LINE__, "%s", msg)
-#include <utarray.h>
-#include <uthash.h>
-
-#ifdef PROD
-#define trace(f,l) ((void)0)
-#else
+#ifdef _DEBUG
 #define trace(f,l) fprintf(stderr,"\"%s\",%d: ",f,l)
+#define ckptm(...) do {						\
+    fprintf(stderr,"%s,%d(%s): ",__FILE__,__LINE__,__func__);	\
+    fprintf(stderr, __VA_ARGS__);				\
+    fflush(stderr);						\
+  } while(0)
+#define ckpt() do {						\
+    fprintf(stderr,"%s,%d(%s)\n",__FILE__,__LINE__,__func__);	\
+    fflush(stderr);						\
+  } while(0)
+#else
+#define trace(f,l) ((void)f,(void)l)
+#define ckptm(...) ((void)0)
+#define ckpt() ((void)0)
 #endif
 
-static inline void _fatal(int errcode,const char *file,int line,const char *fmt,...) {
-  trace(file,line);
-  va_list ap;
-  va_start(ap,fmt);vfprintf(stderr,fmt,ap);va_end(ap);
-  putc('\n',stderr);
-  exit(errcode);
-}
-static inline void _errorexit(const char *file,int line, const char *func, const char *fmt,...) {
-  trace(file,line);
-  if (fmt) {
-    va_list ap;
-    va_start(ap,fmt);vfprintf(stderr,fmt,ap);va_end(ap);
-    fputs(": ",stderr);
-    perror(NULL);
-  } else {
-    perror(func);
-  }
-  exit(errno);
-}
+// These are needed for uthash and friends
+#undef oom
+#undef uthash_fatal
+#define oom() errorexit()
+#define uthash_fatal(msg) fatal(ENOMEM,"%s\n",msg)
+
+#define printhex(fptr,data,max,len)	do {			\
+    int i, cnt = (max), lnlen = (len);				\
+    FILE *fp = (fptr);						\
+    char *bytes = (char *)data;					\
+    for (i=0;i<cnt;i++) {					\
+      if (i>0 && lnlen > 0 && (i%lnlen) == 0) fputc('\n',fp);	\
+      fprintf(fp,"%02x",bytes[i]&0xff);				\
+    }								\
+    if (lnlen>0) fputc('\n',fp);				\
+  } while(0);
 
 static inline void *_mymalloc(size_t sz,const char *file,int line) {
   void *p = malloc(sz);
-  if (!p) _fatal(ENOMEM,file,line,NULL);
+  if (!p){
+    trace(file,line);
+    perror(__func__);
+    exit(ENOMEM);
+  }
   return p;
 }
+#define mymalloc(sz) _mymalloc(sz,__FILE__,__LINE__)
 static inline char *_mystrdup(const char *str,const char *file,int line) {
   char *p = strdup(str);
-  if (!p) _fatal(ENOMEM,file,line,NULL);
+  if (!p) {
+    trace(file,line);
+    perror(__func__);
+    exit(ENOMEM);
+  }
   return p;
 }
-
-static inline char *_mystrcat(const char *file,int line,const char *str,...) {
-  va_list ap;
-  const char *p;
-  char *ptr, *d;
-  size_t len = 0;
-  va_start(ap,str);
-  for(p = str; p != NULL; p = va_arg(ap,const char *)) len += strlen(p);
-  va_end(ap);
-  ptr = (char *)_mymalloc(len+1,file,line);
-  va_start(ap,str);
-  for (p = str, d = ptr; p != NULL; p = va_arg(ap,const char*)) {
-    len = strlen(p);
-    if (!len) continue;
-    memcpy(d,p,len);
-    d += len;
-  }
-  *d = '\0';
-  return ptr;
-}
-
-#define mymalloc(sz) _mymalloc(sz,__FILE__,__LINE__)
 #define mystrdup(str) _mystrdup(str,__FILE__,__LINE__)
-#define mystrcat(str,...) _mystrcat(__FILE__,__LINE__,str,## __VA_ARGS__)
-#define fatal(errcode,fmt,...) \
-  _fatal(errcode,__FILE__,__LINE__,fmt , ## __VA_ARGS__)
-#define errorexit(fmt,...) \
-  _errorexit(__FILE__,__LINE__,__func__,fmt , ## __VA_ARGS__)
 
-#ifdef XDEBUG
-#define ckpt(msg,...) do {					\
-    fprintf(stderr,"%s,%d(%s): ",__FILE__,__LINE__,__func__);	\
-    fprintf(stderr,msg ? msg : "\n", ## __VA_ARGS__);		\
+#define fatal(errcode,...)	do {		\
+  trace(__FILE__,__LINE__);			\
+  fprintf(stderr,__VA_ARGS__);			\
+  putc('\n',stderr);				\
+  exit(errcode);				\
+  }while(0)
+#define errormsg(...)	do {			\
+  trace(__FILE__,__LINE__);			\
+  fprintf(stderr,__VA_ARGS__);			\
+  fputs(": ",stderr);				\
+  perror(NULL);					\
+  exit(errno);					\
+  }while(0)
+#define errorexit() do {			\
+  trace(__FILE__,__LINE__);			\
+  perror(__func__);				\
+  exit(errno);					\
+  }while(0)
+
+char *_mystrcat(const char *file,int line,const char *str,...);
+#define mystrcat(...) _mystrcat(__FILE__,__LINE__, __VA_ARGS__,NULL)
+
+#define lockfile(path)	do {					\
+  const char *fp;						\
+  fp = (path);							\
+  int id = (int)getpid();					\
+  int fd = open(fp,O_RDWR|O_CREAT,0666);			\
+  if (fd == -1) errormsg("open(%s)",fp);			\
+  write(fd,(void *)&id,sizeof(id));				\
+  if (flock(fd,LOCK_EX) == -1) errormsg("flock(%s)",fp);	\
   } while(0)
-#else
-#define ckpt(msg,...) ((void)0)
-#endif
+
+#define trimslashes(str)	do {			\
+    char *in = (str);					\
+    int len = strlen(in)-1;				\
+    while(len>0 && in[len] == '/') in[len--] = '\0';	\
+  } while(0)
 #endif

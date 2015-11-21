@@ -1,9 +1,9 @@
 #include "duptable.h"
 #include "utils.h"
-#include "calchash.h"
+#include <uthash.h>
 #include <string.h>
 
-const int SLOTQ = 32;
+#define SLOTQ 32
 
 struct _dupkey {
   gid_t gid;
@@ -32,10 +32,14 @@ struct duptab *duptab_new() {
   return tab;
 }
 
+int duptab_count(struct duptab *tab) {
+  return HASH_COUNT(tab->hash);
+}
 void duptab_add(struct duptab *tab,struct stat *stdat,int hlen,void *hash) {
-  int ks;
+  unsigned ks;
   if (hash == NULL || hlen < 1) hlen = 1;
-  struct _dupkey *nkey = mymalloc(ks=sizeof(struct _dupkey)+hlen-1);
+  struct _dupkey *nkey = mymalloc(ks=sizeof(struct _dupkey)+hlen);
+  //ckmsg("\n\t%08lx - KEYALLOC(%s,%d)\n",(unsigned long)nkey,__FILE__,__LINE__);
   struct _dupentry *s, *tmp;
   memset(nkey,0,ks);
   nkey->gid = stdat->st_gid;
@@ -53,17 +57,21 @@ void duptab_add(struct duptab *tab,struct stat *stdat,int hlen,void *hash) {
     memset(s->inodes,0,SLOTQ*sizeof(ino_t));
     HASH_ADD_KEYPTR(hh, tab->hash, s->key, ks, s);
   } else {
+    //ckpt();
+    //ckmsg("\n\t%08lx - KEYFREE(%s,%d)\n",(unsigned long)nkey,__FILE__,__LINE__);
     free(nkey);
     // Check if there are free slots...
     if (s->cnt == s->slots) {
       // Resize node
+      HASH_DEL(tab->hash, s);
       tmp = mymalloc(sizeof(struct _dupentry)+(SLOTQ+s->slots)*sizeof(ino_t));
       tmp->key = s->key;
       tmp->cnt = s->cnt;
       tmp->slots = s->slots + SLOTQ;
       memcpy(tmp->inodes,s->inodes,tmp->cnt*sizeof(ino_t));
       memset(tmp->inodes+s->cnt,0,SLOTQ*sizeof(ino_t));
-      HASH_REPLACE(hh, tab->hash, key, ks, tmp, s);
+      HASH_ADD_KEYPTR(hh, tab->hash, tmp->key, ks, tmp);
+      //ckpt();
       free(s);
       s = tmp;
     }
@@ -84,13 +92,23 @@ void duptab_sort(struct duptab *tab) {
   HASH_SORT(tab->hash, duptab_sort_function);
 }
 
-void duptab_free(struct duptab *tab) {
+struct duptab *duptab_free(struct duptab *tab) {
   struct _dupentry *s, *tmp;
+  //HASH_ITER(hh, tab->hash, s, tmp) {
+  //ckmsg("XCHK: %08lx\n",(unsigned long)s->key);
+  //}
+
   HASH_ITER(hh, tab->hash, s, tmp) {
     HASH_DEL(tab->hash, s);
+    //ckpt();
+    //ckmsg("\n\t%08lx - KEYFREE(%s,%d)\n",(unsigned long)s->key,__FILE__,__LINE__);
     free(s->key);
+    //ckpt();
     free(s);
   }
+  //ckpt();
+  free(tab);
+  return NULL;
 }
 static ino_t *_duptab_getiter(struct duptab *tab,int *cnt, struct stat *st) {
   if (tab->iter == NULL) {
@@ -115,12 +133,16 @@ ino_t *duptab_next(struct duptab *tab,int *cnt, struct stat *st) {
   if (tab->iter) tab->iter = tab->iter->hh.next;
   return _duptab_getiter(tab,cnt,st);
 }
-#ifdef XDEBUG
+
+#ifdef _DEBUG
 static char *hex(int keylen,char *dat) {
   static char buf[128];
   int cnt, i;
-  cnt = keylen - sizeof(struct _dupkey) + 1;
-  if (cnt <= 2) return "<none>";
+  cnt = keylen - sizeof(struct _dupkey);
+
+  //ckptm("%s (%d:%lu,%d)\n",dat,keylen,sizeof(struct _dupkey),cnt);
+
+  if (cnt<2) return "<none>";
   if (cnt > 60) cnt = 60;
   for (i = 0; i < cnt ; i++) {
     sprintf(buf+(i<<1),"%02x",dat[i]);
@@ -132,17 +154,15 @@ static char *hex(int keylen,char *dat) {
 void duptab_dump(struct duptab *tab) {
   struct _dupentry *s, *tmp;
   int i;
-  fprintf(stderr,"DUPTABLE(%lx): count: %d\n",
-	  (long)tab, HASH_COUNT(tab->hash));
+  fprintf(stdout,"DUPTABLE: count: %d\n", HASH_COUNT(tab->hash));
   HASH_ITER(hh, tab->hash, s, tmp) {
-    fprintf(stderr,"-id(u:%d,g:%d) sz:%lld m:%03o %s (%d/%d)\n",
+    fprintf(stdout,"-id(u:%d,g:%d) sz:%lld m:%03o %s (%d/%d)\n",
 	    s->key->uid, s->key->gid, (long long)s->key->size, s->key->mode,
 	    hex(s->hh.keylen,s->key->cksum),
 	    s->cnt, s->slots);
     for(i=0; i< s->cnt; i++) {
-      fprintf(stderr,"    %d) %llx\n",i, (long long)s->inodes[i]);
+      fprintf(stdout,"    %d) %llx\n",i, (long long)s->inodes[i]);
     }
   }
 }
 #endif
-
