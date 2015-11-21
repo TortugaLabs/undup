@@ -8,7 +8,7 @@ CFG_TARGET= # --host=$(TARGET)
 
 EXTLIBDIR = lib
 PEDANTIC=-Wall -Wextra -Werror -std=gnu99 -pedantic
-INCDIRS = -I$(CRYPTO_DIR) -I$(UTHASH_DIR)/src
+INCDIRS = -I$(CRYPTO_DIR) -I$(UTHASH_DIR)/src -I$(GDBM_LIBDIR)/src
 
 OPTIMIZ = -g -D_DEBUG -Og # Debug build
 #OPTIMIZ = -O3 # Prod build
@@ -43,10 +43,10 @@ prod:
 	# This macro checks that we have do not have debug build stuff
 	# and/or using the correct target architecture
 	if [ -f _debug ] ; then  make realclean ; fi
-	t=$(TARGET) ; [ -z "$$t" ] && t=`uname -m` ; \
+	set -x ; t=$(TARGET) ; [ -z "$$t" ] && t=`uname -m` ; \
 		if [ -f _prod ] ; then \
 		  c=$$(cat _prod) ; \
-		  [ x"$c" != x"$t" ] && make realclean ; \
+		  [ x"$$c" != x"$$t" ] && make realclean ; \
 		fi ; \
 		echo $$t > _prod
 	make OPTIMIZ=-O3 all
@@ -58,7 +58,7 @@ debug:
 	t=$(TARGET) ; [ -z "$$t" ] && t=`uname -m` ; \
 		if [ -f _debug ] ; then \
 		  c=$$(cat _debug) ; \
-		  [ x"$c" != x"$t" ] && make realclean ; \
+		  [ x"$$c" != x"$$t" ] && make realclean ; \
 		fi ; \
 		echo $$t > _debug
 	make all
