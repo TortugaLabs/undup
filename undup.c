@@ -110,6 +110,7 @@ int undup_main(int argc,char **argv) {
   gopts.dryrun = true;
   gopts.usecache = true;
   gopts.verbose = true;
+  hash_set(CH_HASH_TYPE);
 
   while ((opt = getopt(argc,argv,"h?Vqv5SemCsc:l:")) != -1) {
     switch (opt) {

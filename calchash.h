@@ -8,7 +8,7 @@ struct hash_ctx;
 #define CH_SHA256 '2'
 
 #ifndef CH_HASH_TYPE
-#define CH_HASH_TYPE MD5
+#define CH_HASH_TYPE CH_MD5
 #endif
 
 struct IHash {

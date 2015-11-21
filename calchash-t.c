@@ -27,6 +27,7 @@ TEST(sha1check_and_file) {
   //printhex(stdout,buf,hash_len(),0);
   unlink(p);
   free(buf);
+  printf("%s\n", hash_name());
 }
 
 TEST(sha256check) {
@@ -62,6 +63,7 @@ TEST(sha256check) {
   hash_free(ctx,buf);
   assertTrue(!memcmp(hash3,buf,hash_len()));
   free(buf);
+  printf("%s\n", hash_name());
 }
 
 TEST(md5check) {
@@ -97,4 +99,5 @@ TEST(md5check) {
   assertTrue(!memcmp(hash3,buf,hash_len()));
   free(buf);
 
+  printf("%s\n", hash_name());
 }
