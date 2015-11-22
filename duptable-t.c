@@ -5,9 +5,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <malloc.h>
 
-#define CLUSTER 100
-#define MAX_ITEMS 20000
+#define CLUSTER 50
+#define MAX_ITEMS 1000000
 
 static struct stat *mkstat(struct stat *stp,ino_t ino,uid_t uid,gid_t gid,off_t size,mode_t mode) {
   memset(stp,0,sizeof(struct stat));
@@ -24,6 +25,9 @@ TEST(duptable_checked) {
   struct stat stb;
   int cnt;
   ino_t *inos;
+  struct mallinfo m1, m2;
+
+  m1 = mallinfo();
 
   dt = duptab_new();
   assertTrue(dt);
@@ -130,6 +134,8 @@ TEST(duptable_checked) {
 	       0,NULL);
   duptab_free(dt);
 
+  m2 = mallinfo();
+  assertEquals(m1.uordblks,m2.uordblks);
 }
 
 TEST(duptable_output) {
@@ -166,7 +172,9 @@ TEST(duptable_output) {
 TEST(duptable_large) {
   struct duptab *dt;
   struct stat stb;
+  struct mallinfo m1, m2;
 
+  m1 = mallinfo();
   dt = duptab_new();
   for (int j=0;j < MAX_ITEMS; j++) {
     int size = rand() % CLUSTER;
@@ -187,5 +195,6 @@ TEST(duptable_large) {
   }
   duptab_sort(dt);
   duptab_free(dt);
-
+  m2 = mallinfo();
+  assertEquals(m1.uordblks,m2.uordblks);
 }
