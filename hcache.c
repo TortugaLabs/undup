@@ -96,7 +96,10 @@ void hcache_validate(struct hcache *cache, struct stat *st) {
   //ckpt(0);
   datum = gdbm_fetch(cache->dbf, key);
   //ckpt(0);
-  if (datum.dptr == NULL) return;
+  if (datum.dptr == NULL) {
+    free(key.dptr);
+    return;
+  }
   if (gdbm_store(cache->validated, key, datum, GDBM_INSERT) == -1)
     fatal(gdbm_errno,"gdbm_store %s", gdbm_strerror(gdbm_errno));
   //ckpt(0);
