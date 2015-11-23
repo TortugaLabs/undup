@@ -102,6 +102,7 @@ char *hash_file(const char *file) {
     if (cnt == -1) errormsg("read(%s)",file);
     hash_update(ctx, buf, cnt);
   }
+  close(fd);
   res = mymalloc(hash_len());
   hash_free(ctx,res);
   return res;
