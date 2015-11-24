@@ -168,7 +168,11 @@ int undup_main(int argc,char **argv) {
       gopts.verbose = 0;
       break;
     case 'V':
+#ifdef _DEBUG
+      printf("undup v%s (DEBUG)\n",version);
+#else
       printf("undup v%s\n",version);
+#endif
       exit(0);
     case 'h':
     case '?':
