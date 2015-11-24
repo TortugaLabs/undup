@@ -17,10 +17,12 @@
  */
 #include <mcheck.h>
 #include <cu.h>
-static void _mywrite(a,b,c,f,l) {
+#include <unistd.h>
+#include "utils.h"
+static void _mywrite(int a,const void *b,size_t c,const char *f,int l) {
   if (write(a,b,c) == -1) errormsg("write(%s,%d):",f,l);
 }
-#define write(a,b,c) _mywrite(a,b,c,__FILE__,__LINE__);
+#define write(a,b,c) _mywrite(a,b,c,__FILE__,__LINE__)
 #include <cu.c>
 #undef write
 
@@ -30,7 +32,6 @@ static void _mywrite(a,b,c,f,l) {
 #include "cu-t.h"
 #include <time.h>
 #include <unistd.h>
-#include "utils.h"
 #include <fcntl.h>
 
 #define CLUSTER 100
