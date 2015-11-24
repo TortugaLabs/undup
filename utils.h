@@ -127,7 +127,8 @@ char *_mystrcat(const char *file,int line,const char *str,...);
   int id = (int)getpid();					\
   int fd = open(fp,O_RDWR|O_CREAT,0666);			\
   if (fd == -1) errormsg("open(%s)",fp);			\
-  write(fd,(void *)&id,sizeof(id));				\
+  if (write(fd,(void *)&id,sizeof(id))==-1)			\
+    errormsg("write(%s)",fp);					\
   if (flock(fd,LOCK_EX) == -1) errormsg("flock(%s)",fp);	\
   } while(0)
 
