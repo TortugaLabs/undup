@@ -66,7 +66,7 @@ prod:
 		  [ x"$$c" != x"$$t" ] && make realclean ; \
 		fi ; \
 		echo $$t > _prod
-	make OPTIMIZ=-O3 all
+	make OPTIMIZ=-O3 LDFLAGS=-s all
 
 debug:
 	# This macro checks that we have do not have prod build stuff
@@ -106,7 +106,7 @@ test: test.c $(OBJS) $(TESTS) $(GDBM_LIBDIR)/libgdbm.a
 		test.c $(OBJS) $(TESTS) $(GDBM_LIBDIR)/libgdbm.a
 
 undup: $(OBJS) main.o $(GDBM_LIBDIR)/libgdbm.a
-	$(CC) $(CFLAGS) -o undup main.o $(OBJS) $(GDBM_LIBDIR)/libgdbm.a
+	$(LD) $(LDFLAGS) $(CFLAGS) -o undup main.o $(OBJS) $(GDBM_LIBDIR)/libgdbm.a
 
 # pull in dependancy...
 -include $(OBJS:.o=.d)

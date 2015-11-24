@@ -270,6 +270,9 @@ int undup_main(int argc,char **argv) {
   }
   vmsg("Using hash: %s\n", hash_name());
   trimslashes(root = argv[optind]);
+  if (gopts.scanonly) {
+    vmsg("[SCAN-ONLY] ");
+  }
   vmsg("Scanning %s\n", root);
 
   fscanner_init(&fs, root, gopts.usecache);
@@ -320,7 +323,7 @@ int undup_main(int argc,char **argv) {
     struct mallinfo mi;
     mi = mallinfo();
     if (mi.uordblks) {
-      fprintf(stderr,"Unallocated memory: %s\n",
+      fprintf(stderr,"Leaked memory: %s\n",
 	      make_human_readable_str(mi.uordblks,0,0));
     }
   }
