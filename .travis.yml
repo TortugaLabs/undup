@@ -1,0 +1,3 @@
+language: c
+script: make debug && make check
+compiler: gcc
