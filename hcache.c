@@ -10,6 +10,8 @@ struct hcache {
   char *path;
   int type;
   int hlen;
+  int hits;
+  int misses;
 };
 
 struct hcache_key {
@@ -25,6 +27,7 @@ struct hcache_key {
 static datum _hcache_genkey(struct hcache *cache,struct stat *st) {
   datum key;
   struct hcache_key *sk = mymalloc(sizeof(struct hcache_key));
+  memset(sk,0,sizeof(struct hcache_key));
   key.dsize = sizeof(struct hcache_key);
   sk->inode = st->st_ino;
   sk->mode = st->st_mode & ~S_IFMT;
@@ -34,11 +37,18 @@ static datum _hcache_genkey(struct hcache *cache,struct stat *st) {
   sk->mtime = st->st_mtime;
   sk->cktype = cache->type;
   key.dptr = (char *)sk;
+  //ckptm("i:%llx m:%03o s:%lld %lld %c\n",(long long)sk->inode,sk->mode,(long long)sk->size,(long long)sk->mtime, sk->cktype);
   return key;
 }
 
 const char *hcache_getpath(struct hcache *cache) {
   return cache->path;
+}
+
+void hcache_stats(struct hcache *cache,int *hits, int *misses){
+  //ckpt();
+  if(hits) *hits = cache->hits;
+  if(misses) *misses = cache->misses;
 }
 
 struct hcache *hcache_new(const char *base,int type,int len) {
@@ -50,7 +60,6 @@ struct hcache *hcache_new(const char *base,int type,int len) {
   cache->dbf = gdbm_open(cachefile,0,GDBM_READER,0666,NULL);
   cache->type = type;
   cache->hlen = len;
-
   return cache;
 }
 
@@ -133,6 +142,12 @@ int hcache_get(struct hcache *cache, struct stat *st,char **hash) {
   datum = gdbm_fetch(cache->dbf, key);
   free(key.dptr);
   if (hash) *hash = datum.dptr;
+  if (datum.dptr) {
+    cache->hits++;
+    //printhex(stderr,datum.dptr, datum.dsize,0); fprintf(stderr,"\n");
+  } else {
+    cache->misses++;
+  }
   return datum.dptr != NULL;
 }
 
