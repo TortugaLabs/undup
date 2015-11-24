@@ -1,0 +1,9 @@
+[submodule "lib/uthash"]
+	path = lib/uthash
+	url = https://github.com/troydhanson/uthash.git
+[submodule "lib/cu"]
+	path = lib/cu
+	url = https://github.com/danfis/cu.git
+[submodule "lib/crypto-algorithms"]
+	path = lib/crypto-algorithms
+	url = https://github.com/B-Con/crypto-algorithms.git

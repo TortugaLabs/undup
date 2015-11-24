@@ -1,9 +1,6 @@
 *.o
 *.d
 undup
-lib/uthash
-lib/cu
-lib/crypto-algorithms
 _debug
 _prod
 test
