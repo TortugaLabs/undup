@@ -4,5 +4,6 @@ SDKDIR=/opt/sdk3.3-genericfs-arm-mv5sft
 export PATH=$SDKDIR/cross/bin:$PATH
 TARGET=arm-mv5sft-linux-gnueabi
 
-make TARGET=$TARGET CC=$TARGET-gcc LD=$TARGET-gcc AR=$TARGET-ar CFG_TARGET=--host=$TARGET prod
+[ $# -eq 0 ] && set - prod
 
+make TARGET=$TARGET CC=$TARGET-gcc LD=$TARGET-gcc AR=$TARGET-ar CFG_TARGET=--host=$TARGET "$@"
