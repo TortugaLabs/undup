@@ -57,6 +57,7 @@ void fscanner(struct fs_dat *dat, struct cat_cb *cb) {
 		|| (dp->d_name[1] == '.' && dp->d_name[2] == '\0'))) continue;
       fpath = mystrcat(dirpath, "/", dp->d_name);
       if (lstat(fpath,&stbuf) == -1) errormsg("lstat(%s)",fpath);
+      free(fpath);
 
       // Catalogue line
       if (cb) cb->callback(cdir, dp->d_name, &stbuf, cb->ext);
@@ -84,7 +85,6 @@ void fscanner(struct fs_dat *dat, struct cat_cb *cb) {
 	  }
 	}
       }
-      free(fpath);
     }
     //ckpt(0);
     closedir(dh);
