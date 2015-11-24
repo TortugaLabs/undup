@@ -27,7 +27,7 @@ CU_DIR = $(EXTLIBDIR)/cu
 CU_CFLAGS = -I$(CU_DIR)
 
 OBJS = utils.o calchash.o inodetab.o duptable.o hcache.o \
-	undup.o fscanner.o dedup.o
+	undup.o fscanner.o dedup.o human_readable.o
 TESTS = $(shell for f in $(OBJS:%.o=%-t.c) ; do [ -f $$f ] && echo $$f ; done)
 # MTRACE = env MALLOC_TRACE=mtrace.data
 
