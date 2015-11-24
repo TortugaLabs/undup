@@ -17,6 +17,7 @@
  */
 #include <mcheck.h>
 #include <cu.h>
+#define write(a,b,c) ((void)write(a,b,c))
 #include <cu.c>
 
 #include "test.h"
@@ -103,7 +104,7 @@ void mkfile(const char *dir,const char *fn,const char *data) {
 void mklink(const char *dir,const char *old,const char *new) {
   char *dold = mystrcat(dir,"/",old);
   char *dnew = mystrcat(dir,"/",new);
-  link(dold,dnew);
+  if (link(dold,dnew) == -1) errormsg("link(%s,%s)",dold,dnew);
   free(dnew);
   free(dold);
 }
