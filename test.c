@@ -24,7 +24,6 @@ static void _mywrite(int a,const void *b,size_t c,const char *f,int l) {
 }
 #define write(a,b,c) _mywrite(a,b,c,__FILE__,__LINE__)
 #include <cu.c>
-#undef write
 
 #include "test.h"
 #include <stdlib.h>
@@ -96,7 +95,7 @@ char *populate(char *base, int max) {
 void rm_rf(const char *dir) {
   char buf[4096];
   snprintf(buf,sizeof buf,"rm -rf \"%s\"", dir);
-  system(buf);
+  if (system(buf) == -1) errormsg("system(%s)",buf);
 }
 
 void mkfile(const char *dir,const char *fn,const char *data) {
