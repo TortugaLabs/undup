@@ -40,13 +40,13 @@ struct duptab *dedup_cluster(struct duptab *in) {
 /*
  * Final pass
  */
-static void dedup_final(struct fs_dat *fs,struct dedup_cb *cb, struct stat *stp) {
+static void dedup_final(struct fs_dat *fs,struct duptab *dupcs,struct dedup_cb *cb, struct stat *stp) {
   ino_t *inos;
   int icnt;
 
-  for (inos = duptab_first(fs->dtab,&icnt,stp) ;
+  for (inos = duptab_first(dupcs,&icnt,stp) ;
        inos != NULL ;
-       inos = duptab_next(fs->dtab,&icnt,stp)) {
+       inos = duptab_next(dupcs,&icnt,stp)) {
     if (icnt < 2) continue;
     cb->do_dedup(fs,inos,icnt,stp,cb->ext);
   }
@@ -54,13 +54,13 @@ static void dedup_final(struct fs_dat *fs,struct dedup_cb *cb, struct stat *stp)
 /*
  * PASS3: check hashes
  */
-static void dedup_pass3(struct fs_dat *fs,struct dedup_cb *cb, struct stat *stp) {
+static void dedup_pass3(struct fs_dat *fs,struct duptab *dupcs,struct dedup_cb *cb, struct stat *stp) {
   ino_t *inos;
   int icnt;
 
-  for (inos = duptab_first(fs->dtab,&icnt,stp) ;
+  for (inos = duptab_first(dupcs,&icnt,stp) ;
        inos != NULL ;
-       inos = duptab_next(fs->dtab,&icnt,stp)) {
+       inos = duptab_next(dupcs,&icnt,stp)) {
     if (icnt < 2) continue;
     if (stp->st_size <= (BLKSZ+BLKSZ)) {
       // OK files are smaller than BLKSZ*2, therefore we already compared
@@ -74,36 +74,41 @@ static void dedup_pass3(struct fs_dat *fs,struct dedup_cb *cb, struct stat *stp)
       stp->st_ino = inos[i];
       fpt = inodetab_get(fs->itab,inos[i],&stp->st_mtime);
       if (fpt == NULL || *fpt==NULL) fatal(ENOENT,"Missing i-node %llx",(long long)inos[i]);
-
       vn = mystrcat(fs->root,"/",*fpt);
       if (fs->cache) {
 	hcache_get(fs->cache,stp,&hash);
 	if (hash == NULL) {
 	  // Compute and cache hash
+	  //ckpt();
 	  hash = hash_file(vn);
 	  hcache_put(fs->cache,stp,hash);
 	}
       } else {
+	//ckpt();
 	hash = hash_file(vn);
       }
+      //fprintf(stdout,"%s: ", *fpt);
+      //printhex(stdout,hash,hash_len(),0);
+      //fprintf(stdout," (%s:%d)\n",hash_name(),hash_len());
       free(vn);
       duptab_add(dups, stp, hash_len(), hash);
+      free(hash);
     }
     // Check new cluster...
-    dedup_final(fs,cb,stp);
+    dedup_final(fs,dups,cb,stp);
     duptab_free(dups);
   }
 }
 /*
  * PASS2: check last bytes
  */
-static void dedup_pass2(struct fs_dat *fs,struct dedup_cb *cb, struct stat *stp) {
+static void dedup_pass2(struct fs_dat *fs,struct duptab *dupcs,struct dedup_cb *cb, struct stat *stp) {
   ino_t *inos;
   int icnt;
 
-  for (inos = duptab_first(fs->dtab,&icnt,stp) ;
+  for (inos = duptab_first(dupcs,&icnt,stp) ;
        inos != NULL ;
-       inos = duptab_next(fs->dtab,&icnt,stp)) {
+       inos = duptab_next(dupcs,&icnt,stp)) {
     if (icnt < 2) continue;
     if (stp->st_size <= BLKSZ) {
       // OK files are smaller than BLKSZ, therefore we already compared
@@ -138,20 +143,20 @@ static void dedup_pass2(struct fs_dat *fs,struct dedup_cb *cb, struct stat *stp)
       duptab_add(dups, stp, len, buf);
     }
     // Check new cluster...
-    dedup_pass3(fs,cb,stp);
+    dedup_pass3(fs,dups,cb,stp);
     duptab_free(dups);
   }
 }
 /*
  * PASS1: check first bytes
  */
-static void dedup_pass1(struct fs_dat *fs,struct dedup_cb *cb, struct stat *stp) {
+static void dedup_pass1(struct fs_dat *fs,struct duptab *dupcs, struct dedup_cb *cb, struct stat *stp) {
   ino_t *inos;
   int icnt;
 
-  for (inos = duptab_first(fs->dtab,&icnt,stp) ;
+  for (inos = duptab_first(dupcs,&icnt,stp) ;
        inos != NULL ;
-       inos = duptab_next(fs->dtab,&icnt,stp)) {
+       inos = duptab_next(dupcs,&icnt,stp)) {
     if (icnt < 2) continue;
     struct duptab *dups = duptab_new();
     int i, fd, len;
@@ -177,7 +182,8 @@ static void dedup_pass1(struct fs_dat *fs,struct dedup_cb *cb, struct stat *stp)
       duptab_add(dups, stp, len, buf);
     }
     // Check new cluster...
-    dedup_pass2(fs,cb,stp);
+    //duptab_dump(dups);
+    dedup_pass2(fs,dups,cb,stp);
     duptab_free(dups);
   }
 }
@@ -186,5 +192,5 @@ static void dedup_pass1(struct fs_dat *fs,struct dedup_cb *cb, struct stat *stp)
  */
 void dedup_pass(struct fs_dat *fs,struct dedup_cb *cb) {
   struct stat st;
-  dedup_pass1(fs,cb,&st);
+  dedup_pass1(fs,fs->dtab,cb,&st);
 }
