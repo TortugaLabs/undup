@@ -62,8 +62,11 @@ static inline void *_mymalloc(size_t sz,const char *file,int line) {
   }
   return p;
 }
-//#define mymalloc(sz) malloc(sz)
+#ifdef _DEBUG
+#define mymalloc(sz) malloc(sz)
+#else
 #define mymalloc(sz) _mymalloc(sz,__FILE__,__LINE__)
+#endif
 static inline char *_mystrdup(const char *str,const char *file,int line) {
   char *p = strdup(str);
   if (!p) {
@@ -73,7 +76,11 @@ static inline char *_mystrdup(const char *str,const char *file,int line) {
   }
   return p;
 }
+#ifdef _DEBUG
+#define mystrdup(str) strdup(str)
+#else
 #define mystrdup(str) _mystrdup(str,__FILE__,__LINE__)
+#endif
 
 #define fatal(errcode,...)	do {		\
   trace(__FILE__,__LINE__);			\

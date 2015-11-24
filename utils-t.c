@@ -11,12 +11,12 @@ TEST(utils_printhex) {
 
 TEST(mymalloc1) {
   void *p, *q;
-  p = mymalloc(8192);
+  p = _mymalloc(8192,__FILE__,__LINE__);
   assertTrue(p);
   if (p) free(p);
 
   if (forktest(ENOMEM)) {
-    q = mymalloc(-1); if (q) free(q);
+    q = _mymalloc(-1,__FILE__,__LINE__); if (q) free(q);
     exit(0);
   }
 }
