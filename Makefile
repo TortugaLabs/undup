@@ -27,7 +27,7 @@ EXTLIBDIR = lib
 PEDANTIC=-Wall -Wextra -Werror -std=gnu99 -pedantic
 INCDIRS = -I$(CRYPTO_DIR) -I$(UTHASH_DIR)/src -I$(GDBM_LIBDIR)/src
 
-OPTIMIZ = -g -D_DEBUG -O1 # Debug build
+OPTIMIZ = -g -D_DEBUG -Og # Debug build
 #OPTIMIZ = -O3 # Prod build
 
 CFLAGS = $(OPTIMIZ) $(PEDANTIC) $(INCDIRS)
