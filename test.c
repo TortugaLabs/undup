@@ -17,8 +17,12 @@
  */
 #include <mcheck.h>
 #include <cu.h>
-#define write(a,b,c) ((void)write(a,b,c))
+static void _mywrite(a,b,c,f,l) {
+  if (write(a,b,c) == -1) errormsg("write(%s,%d):",f,l);
+}
+#define write(a,b,c) _mywrite(a,b,c,__FILE__,__LINE__);
 #include <cu.c>
+#undef write
 
 #include "test.h"
 #include <stdlib.h>
