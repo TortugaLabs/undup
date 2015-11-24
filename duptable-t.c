@@ -8,7 +8,7 @@
 #include <malloc.h>
 
 #define CLUSTER 50
-#define MAX_ITEMS 1000000
+#define MAX_ITEMS 100000
 
 static struct stat *mkstat(struct stat *stp,ino_t ino,uid_t uid,gid_t gid,off_t size,mode_t mode) {
   memset(stp,0,sizeof(struct stat));
