@@ -2,3 +2,7 @@
 language: c
 script: make debug && make check
 compiler: gcc
+addons:
+  apt:
+    packages: ['gcc-4.8']
+  env: COMPILER=gcc-4.8
