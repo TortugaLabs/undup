@@ -123,6 +123,15 @@ static void do_dedup(struct fs_dat *fs,ino_t *inos,int icnt,struct stat *stp,voi
   free(basepath);
 }
 
+static void show_version() {
+#ifdef _DEBUG
+  printf("undup v%s (DEBUG)\n",version);
+#else
+  printf("undup v%s\n",version);
+#endif
+  exit(0);
+}
+
 int undup_main(int argc,char **argv) {
   char *root;
   FILE *catfp = NULL;
@@ -185,12 +194,7 @@ int undup_main(int argc,char **argv) {
       gopts.verbose = 0;
       break;
     case 'V':
-#ifdef _DEBUG
-      printf("undup v%s (DEBUG)\n",version);
-#else
-      printf("undup v%s\n",version);
-#endif
-      exit(0);
+      show_version();
     case 'h':
     case '?':
     default: /* '?' */
@@ -260,6 +264,7 @@ int undup_main(int argc,char **argv) {
     }
   }
   if (optind >= argc) {
+    if (gopts.verbose > 1) show_version();
     fputs("FATAL: Expected arguments after options\n",stderr);
     exit(EXIT_FAILURE);
   }
