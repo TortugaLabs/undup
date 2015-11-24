@@ -37,6 +37,8 @@ This software makes use of the following libraries:
 * [GDBM-1.11](http://www.gnu.org.ua/software/gdbm/) - library of
   database functions to create and manipulate a hashed database.
   Licensed as GPLv3.
+* human_readable.c from [busybox](http://www.busybox.net/) - GPLv2
+  Licensed.
 
 ## Issues
 
