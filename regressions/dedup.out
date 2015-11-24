@@ -1,0 +1,16 @@
+TEST: # Small files
+0: msg1.txt
+1: msg1a.txt
+STP!=NULL
+TEST: # large files-tail end
+0: msg1.txt
+1: msg1a.txt
+STP!=NULL
+TEST: # large files-middle
+0: msg1.txt
+1: msg1a.txt
+STP!=NULL
+TEST: # medium files
+0: msg1.txt
+1: msg1a.txt
+STP!=NULL
