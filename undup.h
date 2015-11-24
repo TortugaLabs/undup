@@ -6,6 +6,7 @@ struct undup_opts {
   int dryrun;
   int usecache;
   int mstats;
+  int cstats;
   int verbose;
   int scanonly;
 };

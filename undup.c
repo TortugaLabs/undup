@@ -11,6 +11,7 @@ const char version[] = "2.0.0";
 #include <string.h>
 #include "fscanner.h"
 #include <unistd.h>
+#include "human_readable.h"
 
 struct undup_opts gopts;
 
@@ -67,6 +68,12 @@ static void do_dedup(struct fs_dat *fs,ino_t *inos,int icnt,struct stat *stp,voi
 
   fpt = inodetab_get(fs->itab,inos[0],&stp->st_mtime);
   stb.st_ino = inos[0];
+  if (gopts.verbose > 1) {
+    printf("%s(%llx): u:%d g:%d m:%03o (%s)\n",
+	   *fpt, (long long)inos[0],
+	   stp->st_uid, stp->st_gid, stp->st_mode,
+	   make_human_readable_str(stp->st_size,0,0));
+  }
 
   if (fpt == NULL || *fpt==NULL) fatal(ENOENT,"Missing i-node %llx",(long long)inos[0]);
   basepath = mystrcat(fs->root,"/",*fpt,NULL);
@@ -74,8 +81,10 @@ static void do_dedup(struct fs_dat *fs,ino_t *inos,int icnt,struct stat *stp,voi
   for (i = 1; i < icnt; i++) {
     fpt = inodetab_get(fs->itab,inos[i],&stp->st_mtime);
     if (fpt == NULL || *fpt==NULL) fatal(ENOENT,"Missing i-node %llx",(long long)inos[i]);
-
     while (*fpt) {
+      if (gopts.verbose > 1) {
+	printf("    %s: (%llx)\n", *fpt, (long long)inos[i]);
+      }
       vpath = mystrcat(fs->root,"/",*(fpt++),NULL);
       if (stb.st_ino != inos[i]) {
 	/* Compute statistics... */
@@ -83,10 +92,13 @@ static void do_dedup(struct fs_dat *fs,ino_t *inos,int icnt,struct stat *stp,voi
 	s->blocks += stb.st_blocks;
       }
       s->files++;
-      vmsg("Linking %s -> %s\n", vpath, basepath);
       if (!gopts.dryrun) {
 	if (unlink(vpath)==-1) errormsg("unlink(%s)",vpath);
 	if (link(basepath,vpath)==-1) errormsg("link(%s->%s)",basepath,vpath);
+      } else {
+	if (gopts.verbose > 2) {
+	  fprintf(stderr,"Linking %s -> %s\n", vpath, basepath);
+	}
       }
       free(vpath);
     }
@@ -109,10 +121,10 @@ int undup_main(int argc,char **argv) {
   memset(&gopts,0,sizeof(struct undup_opts));
   gopts.dryrun = true;
   gopts.usecache = true;
-  gopts.verbose = true;
+  gopts.verbose = 1;
   hash_set(CH_HASH_TYPE);
 
-  while ((opt = getopt(argc,argv,"h?Vqv5SemCsc:l:")) != -1) {
+  while ((opt = getopt(argc,argv,"h?Vqv5SemCKsc:l:")) != -1) {
     switch (opt) {
     case 'c':
       if (catfp) fclose(catfp);
@@ -134,6 +146,9 @@ int undup_main(int argc,char **argv) {
     case 'C':
       gopts.usecache = false;
       break;
+    case 'K':
+      gopts.cstats = true;
+      break;
     case 'm':
       gopts.mstats = true;
       break;
@@ -147,10 +162,10 @@ int undup_main(int argc,char **argv) {
       gopts.scanonly = true;
       break;
     case 'v':
-      gopts.verbose = true;
+      gopts.verbose++;
       break;
     case 'q':
-      gopts.verbose = false;
+      gopts.verbose = 0;
       break;
     case 'V':
       printf("undup v%s\n",version);
@@ -195,6 +210,9 @@ int undup_main(int argc,char **argv) {
       fputs("\t-m: shows memory stats\n",stderr);
       // *-m*::
       //    Shows memory statistics
+      fputs("\t-K: shows cache stats\n",stderr);
+      // *-K*::
+      //    Shows caching stats
       fputs("\t-s: scan only\n",stderr);
       // *-s*::
       //    only scans the file system
@@ -236,23 +254,50 @@ int undup_main(int argc,char **argv) {
   if (clusters == NULL) {
     vmsg("No size clusters found!\n");
   } else {
+    //ckptm("%llx\n",(long long unsigned)clusters);
     vmsg("Size clusters found: %d\n", duptab_count(clusters));
   }
-  if (!gopts.scanonly && clusters) {
-    duptab_free(fs.dtab); // We are only interested in the clusters!
-    fs.dtab = clusters;
-    duptab_sort(fs.dtab); // Sort by size....
+  if (clusters) {
+    if (!gopts.scanonly) {
+      duptab_free(fs.dtab); // We are only interested in the clusters!
+      fs.dtab = clusters;
+      duptab_sort(fs.dtab); // Sort by size....
 
-    memset(&stats,0,sizeof(struct dedup_stats));
-    dedup_pass(&fs,&dpcb);
+      memset(&stats,0,sizeof(struct dedup_stats));
+      dedup_pass(&fs,&dpcb);
 
-    vmsg("Files de-duped: %d\n", stats.files);
-    vmsg("Blocks freed: %d\n", stats.blocks);
+      vmsg("Files de-duped: %d\n", stats.files);
+      vmsg("Storage freed: %s\n", make_human_readable_str(stats.blocks,512,0));
+    } else {
+      duptab_free(clusters);
+    }
   }
-  if (gopts.mstats) malloc_stats();
+  if (fs.cache && gopts.cstats) {
+    int hits,misses;
+    hcache_stats(fs.cache,&hits,&misses);
+    if (hits || misses) {
+      fprintf(stderr,"Hash cache: %d:%d (%d%% hit ratio)\n",hits,misses,
+	     hits * 100 / (hits + misses));
+    }
+  }
+
+  if (gopts.mstats) {
+    struct mallinfo mi;
+    malloc_stats();
+    mi = mallinfo();
+    vmsg("Allocated memory: %s\n", make_human_readable_str(mi.uordblks,0,0));
+  }
   fscanner_close(&fs);
 #ifdef _DEBUG
   muntrace();
+  if (gopts.mstats) {
+    struct mallinfo mi;
+    mi = mallinfo();
+    if (mi.uordblks) {
+      fprintf(stderr,"Unallocated memory: %s\n",
+	      make_human_readable_str(mi.uordblks,0,0));
+    }
+  }
 #endif
   return 0;
 }
