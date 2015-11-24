@@ -86,10 +86,9 @@ static void do_dedup(struct fs_dat *fs,ino_t *inos,int icnt,struct stat *stp,voi
   fpt = inodetab_get(fs->itab,inos[0],&stp->st_mtime);
   stb.st_ino = inos[0];
   if (gopts.verbose > 1) {
-    printf("%s(%llx): u:%d g:%d m:%03o (%s)\n",
-	   *fpt, (long long)inos[0],
-	   stp->st_uid, stp->st_gid, stp->st_mode,
-	   make_human_readable_str(stp->st_size,0,0));
+    printf("- (%llx):u=%d g=%d m=%03o (%s):%s\n",
+	   (long long)inos[0], stp->st_uid, stp->st_gid, stp->st_mode,
+	   make_human_readable_str(stp->st_size,0,0), *fpt);
   }
 
   if (fpt == NULL || *fpt==NULL) fatal(ENOENT,"Missing i-node %llx",(long long)inos[0]);
@@ -100,7 +99,7 @@ static void do_dedup(struct fs_dat *fs,ino_t *inos,int icnt,struct stat *stp,voi
     if (fpt == NULL || *fpt==NULL) fatal(ENOENT,"Missing i-node %llx",(long long)inos[i]);
     while (*fpt) {
       if (gopts.verbose > 1) {
-	printf("    %s: (%llx)\n", *fpt, (long long)inos[i]);
+	printf("    -> (%llx):%s\n", (long long)inos[i], *fpt);
       }
       vpath = mystrcat(fs->root,"/",*(fpt++),NULL);
       if (stb.st_ino != inos[i]) {
