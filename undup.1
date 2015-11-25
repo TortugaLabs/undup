@@ -2,12 +2,12 @@
 .\"     Title: undup
 .\"    Author: A Liu Ly
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 2015-11-24
+.\"      Date: 2015-11-25
 .\"    Manual: User commands
 .\"    Source: undup.c 2.0
 .\"  Language: English
 .\"
-.TH "UNDUP" "1" "2015\-11\-24" "undup\&.c 2\&.0" "User commands"
+.TH "UNDUP" "1" "2015\-11\-25" "undup\&.c 2\&.0" "User commands"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -34,7 +34,7 @@ undup \- tracks duplicate files and merges them with hardlinks
 \fBundup\fR [options] [directory]
 .SH "DESCRIPTION"
 .sp
-\fBundup\fR examines the contents of a filesystem (directory) searching for file duplicates\&. When found, it saves diskspace by replacing repeated files with hardlinks\&.
+\fBundup(1)\fR examines the contents of a filesystem (directory) searching for file duplicates\&. When found, it saves diskspace by replacing repeated files with hardlinks\&.
 .SH "OPTIONS"
 .PP
 \fB\-c\fR catalogue
@@ -100,6 +100,75 @@ show version info
 \fB\-h\fR
 .RS 4
 show help information
+.RE
+.SH "HEURISTICS"
+.sp
+\fBundup(1)\fR this is very straight forward, it does the following heuristics:
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+scans the filesystem recording i\-nodes\&. While this is happening, the hash cache is check to make sure that it is still valid\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+gets files (i\-nodes) that have the same size and sorts them by size\&. Only regular files that are not empty are taken into account here\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  3." 4.2
+.\}
+read and compare the first bytes in each file\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 4.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  4." 4.2
+.\}
+read and compare the last bytes in each file\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 5.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  5." 4.2
+.\}
+calculate the hash of each file
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 6.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  6." 4.2
+.\}
+sort all matching i\-nodes by date\&. Hard link all i\-nodes to the oldest one\&.
 .RE
 .SH "AUTHOR"
 .PP

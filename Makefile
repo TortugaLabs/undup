@@ -54,7 +54,7 @@ help:
 	@echo "	make debug - debugging/development version"
 	@echo "	make check - run tests"
 
-all: undup undup.1
+all: undup docs
 
 prod:
 	# This macro checks that we have do not have debug build stuff
@@ -80,8 +80,13 @@ debug:
 		echo $$t > _debug
 	make all
 
+docs: undup.1 undup.adoc
+
 undup.1: undup.c
 	manify undup.c
+
+docs: undup.c
+	manify --asciidoc undup.c > undup.adoc || rm -f undup.adoc
 
 check:
 	# This macro checks that we have do not have prod build stuff

@@ -4,16 +4,18 @@ Track duplicate files and merge them as hardlinks
 
 Undup is like a number of other command-line utilities that is
 intended to find duplicates in a given set of files and replace them
-from hardlinks to save space.
+with hardlinks to save space.
 
 There are plenty of these types of utilities.  I originally wrote this
 in PHP because I need to run it on a NAS that provided a PHP
 interpreter.  In order to achieve a decent performance this cached
-file hashes.  Because the size of the data increased, I wanted to
+file hashes.  Because the size, of the data increased, I wanted to
 improve the performance of this code by re-writting it in C.
 
 Its only unique feature (that distinguishes it from the other
 alternatives referred here) is the use of file to cache hashes.
+
+The man page can be found [here](undup.adoc).
 
 ## Alternatives
 

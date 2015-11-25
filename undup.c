@@ -213,7 +213,7 @@ int undup_main(int argc,char **argv) {
       //
       // == DESCRIPTION
       //
-      // *undup* examines the contents of a filesystem (directory) searching
+      // *undup(1)* examines the contents of a filesystem (directory) searching
       // for file duplicates.  When found, it saves diskspace by replacing
       // repeated files with hardlinks.
       //
@@ -258,6 +258,22 @@ int undup_main(int argc,char **argv) {
       fputs("\t-h|?: this help message\n",stderr);
       // *-h*::
       //    show help information
+      //
+      // == HEURISTICS
+      //
+      // *undup(1)* this is very straight forward, it does the following
+      // heuristics:
+      //
+      // 1. scans the filesystem recording i-nodes.  While this is happening,
+      //    the hash cache is check to make sure that it is still valid.
+      // 2. gets files (i-nodes) that have the same size and sorts them by
+      //    size.  Only regular files that are not empty are taken into account
+      //    here.
+      // 3. read and compare the first bytes in each file.
+      // 4. read and compare the last bytes in each file.
+      // 5. calculate the hash of each file
+      // 6. sort all matching i-nodes by date.  Hard link all i-nodes to the
+      //    oldest one.
       //--
       exit(EXIT_FAILURE);
     }
