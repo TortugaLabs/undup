@@ -18,6 +18,13 @@
 #include "utils.h"
 #include <stdarg.h>
 
+#ifdef _DEBUG
+#include <stdlib.h>
+#include <unistd.h>
+
+static int trace_unlink = true;
+#endif
+
 char *_mystrcat(const char *file,int line,const char *str,...) {
   va_list ap;
   const char *p;
@@ -41,10 +48,17 @@ char *_mystrcat(const char *file,int line,const char *str,...) {
     d += len;
   }
   *d = '\0';
-  /*
-  FILE *pp = fopen("xout.txt","a");
-  fprintf(pp,"(%s,%d): %08llx %s\n", file,line,(long long unsigned)ptr, ptr);
-  fclose(pp);
-  */
+#ifdef _DEBUG
+  char *env = getenv("MYSTRCAT_TRACE");
+  if (env) {
+    if (trace_unlink) {
+      unlink(env);
+      trace_unlink = false;
+    }
+    FILE *pp = fopen(env,"a");
+    fprintf(pp,"(%s,%d): %08llx %s\n", file,line,(long long unsigned)ptr, ptr);
+    fclose(pp);
+  }
+#endif
   return ptr;
 }
