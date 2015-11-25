@@ -170,6 +170,10 @@ calculate the hash of each file
 .\}
 sort all matching i\-nodes by date\&. Hard link all i\-nodes to the oldest one\&.
 .RE
+.sp
+When comparing files, the file permisison modes, user and group ownership are used as distinguishing features\&. The reason is that \fBundup(1)\fR is intended to be use for \fBlive\fR filesytems\&. In that situation, we want to preserver permissions and file ownerships accross deduplicated i\-nodes\&.
+.sp
+\fBundup(1)\fR uses MD5 for the checksum by default, but it has the option to use SHA256 checksums\&.
 .SH "AUTHOR"
 .PP
 \fBA Liu Ly\fR

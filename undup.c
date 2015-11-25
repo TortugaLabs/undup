@@ -274,6 +274,15 @@ int undup_main(int argc,char **argv) {
       // 5. calculate the hash of each file
       // 6. sort all matching i-nodes by date.  Hard link all i-nodes to the
       //    oldest one.
+      //
+      // When comparing files, the file permisison modes, user and group
+      // ownership are used as distinguishing features.
+      // The reason is that *undup(1)* is intended to be use for *live*
+      // filesytems.  In that situation, we want to preserver permissions
+      // and file ownerships accross deduplicated i-nodes.
+      //
+      // *undup(1)* uses MD5 for the checksum by default, but it has the
+      // option to use SHA256 checksums.
       //--
       exit(EXIT_FAILURE);
     }

@@ -2,7 +2,7 @@
 
 Track duplicate files and merge them as hardlinks
 
-Undup is like a number of other command-line utilities that is
+**Undup** is like a number of other command-line utilities that is
 intended to find duplicates in a given set of files and replace them
 with hardlinks to save space.
 
@@ -15,15 +15,104 @@ improve the performance of this code by re-writting it in C.
 Its only unique feature (that distinguishes it from the other
 alternatives referred here) is the use of file to cache hashes.
 
+## Install
+
+Currently, **undup** is only distributed in source form.  To compile
+**undup** you need a **gcc-4.8** compiler.  I have only tested
+building it with [Centos-7](https://www.centos.org/download/) and
+[Ubuntu](http://www.ubuntu.com/).  To download the source from GitHub
+and enter:
+
+```
+make prod
+```
+
+Then you can copy the resulting `undup` binary files to the
+appropriate location (usually `/usr/bin`).  You can also copy the
+provided `undup.1` man page.
+
+I also the include the `XBUILD` script to create an executable for the
+_ARM_ architecture which I use in my NAS device.  Customize this file
+to taste.
+
+## Documentation
+
 The man page can be found [here](undup.adoc).
 
-## Alternatives
+## Examples
 
-Few alternatives:
+To get a help page:
 
-* [duff](http://duff.dreda.org/) by Camilla Berglund.
-* [rdfind](http://rdfind.pauldreik.se/) by Paul Dreik
-* [fdupes](https://github.com/adrianlopezroche/fdupes) by Adrian Lopez
+```
+[alex@pc3 undup]$ ./undup -h
+Usage: ./undup [options] dir
+	-c catalogue: create a file catalogue
+	-l lockfile: create a exclusive lock
+	-C: disable hash caching
+	-e: execute (disables dry-run mode)
+	-m: shows memory stats
+	-K: shows cache stats
+	-s: scan only
+	-5: use MD5 hashes
+	-S: use SHA256 hashes
+	-q: supress additional info
+	-v: show additional info
+	-V: version info
+	-h|?: this help message
+
+```
+
+Scan file system:
+
+```
+[alex@pc3 undup]$ ./undup -s ./data/test1
+Using hash: md5
+[SCAN-ONLY] Scanning ./data/test1
+Files found: 21675
+Size clusters found: 5025
+```
+
+Scan file system, showing memory statistics:
+
+```
+[alex@pc3 undup]$ ./undup -s -m ./data/test1
+Using hash: md5
+[SCAN-ONLY] Scanning ./data/test1
+Files found: 21675
+Size clusters found: 5025
+```
+
+De-duplicate a file system, using SHA256 checksums and showing cache stats:
+
+```
+[alex@pc3 undup]$ ./undup -K -S ./data/test1
+Using hash: sha256
+Scanning ./data/test1
+Files found: 21675
+Size clusters found: 5025
+Files de-duped: 14553
+Storage freed: 1.2G
+Hash cache: 0:2429 (0% hit ratio)
+
+```
+
+More verbose output:
+
+```
+[alex@pc3 undup]$ ./undup -v -K -S ./data/test1/lb1
+Using hash: sha256
+Scanning ./data/test1/lb1
+Files found: 9
+Size clusters found: 3
+Files de-duped: 3
+Storage freed: 376.0K
+- (180117f0):u=2001 g=1000 m=664 (323K):uthash-master.zip
+    -> (2009570b):raro
+    -> (2009570b):c/uthash-master.zip
+- (180117f2):u=2001 g=1000 m=664 (52K):crypto-algorithms-master.zip
+    -> (2009570a):c/crypto-algorithms-master.zip
+
+```
 
 ## Additional Software
 
@@ -54,7 +143,15 @@ This software makes use of the following libraries:
   - convert between two implementations
   - interface
 - Add more hashes from [sha](http://www.saddi.com/software/sha/).
+- MD2 and SHA1 are implemented but can not be selected.
 
+## Alternatives
+
+Few alternatives:
+
+* [duff](http://duff.dreda.org/) by Camilla Berglund.
+* [rdfind](http://rdfind.pauldreik.se/) by Paul Dreik
+* [fdupes](https://github.com/adrianlopezroche/fdupes) by Adrian Lopez
 
 ## Changes
 
@@ -62,7 +159,10 @@ This software makes use of the following libraries:
   - Re-wrote it in C
 * 1.0.0: Initial PHP release
 
-## Copyright
+## License
+
+**undup** is licensed as GPLv2 software.
+
 
     undup
     Copyright (C) 2015, Alejandro Liu
