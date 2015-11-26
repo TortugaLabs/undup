@@ -153,6 +153,12 @@ Few alternatives:
 * [rdfind](http://rdfind.pauldreik.se/) by Paul Dreik
 * [fdupes](https://github.com/adrianlopezroche/fdupes) by Adrian Lopez
 
+## Continous Integration
+
+This project makes use of [TravisCI](https://travis-ci.org/).  You can
+find the build status page
+[here](https://travis-ci.org/alejandroliu/undup).
+
 ## Changes
 
 * 2.0.0: C rewrite
