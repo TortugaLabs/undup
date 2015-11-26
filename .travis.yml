@@ -2,10 +2,3 @@
 language: c
 script: make GOPTZ=-O1 debug && make GOPTZ=-O1 check
 compiler: gcc
-#sudo: required
-#before_install:
-#  - sudo apt-get install -y python-software-properties
-#  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-#  - sudo apt-get update -qq
-#  - sudo apt-get install -y gcc-4.8
-#  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
