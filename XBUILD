@@ -6,4 +6,7 @@ TARGET=arm-mv5sft-linux-gnueabi
 
 [ $# -eq 0 ] && set - prod
 
-make TARGET=$TARGET CC=$TARGET-gcc LD=$TARGET-gcc AR=$TARGET-ar CFG_TARGET=--host=$TARGET "$@"
+make \
+  TARGET=$TARGET CC=$TARGET-gcc LD=$TARGET-gcc AR=$TARGET-ar \
+  CFG_TARGET=--host=$TARGET XCFLAGS="-D_FILE_OFFSET_BITS=64" \
+  "$@"
