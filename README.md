@@ -1,5 +1,7 @@
 # undup
 
+[![Build Status](https://api.travis-ci.org/alejandroliu/undup.png?branch=master)](http://travis-ci.org/alejandroliu/undup)
+
 Track duplicate files and merge them as hardlinks
 
 **undup** is like a number of other command-line utilities that is
