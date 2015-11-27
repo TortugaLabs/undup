@@ -2,7 +2,7 @@
 
 Track duplicate files and merge them as hardlinks
 
-**Undup** is like a number of other command-line utilities that is
+**undup** is like a number of other command-line utilities that is
 intended to find duplicates in a given set of files and replace them
 with hardlinks to save space.
 
