@@ -86,7 +86,7 @@ docs: undup.1 undup.adoc
 undup.1: undup.c
 	manify undup.c
 
-docs: undup.c
+undup.adoc: undup.c
 	manify --asciidoc undup.c > undup.adoc || rm -f undup.adoc
 
 check:
