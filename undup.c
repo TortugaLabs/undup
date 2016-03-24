@@ -30,6 +30,11 @@ const char version[] = "2.0.0";
 #include <unistd.h>
 #include "human_readable.h"
 
+#ifdef __malloc_ptr_t
+#define MSTATS	1
+#endif
+
+
 struct undup_opts gopts;
 
 struct dedup_stats {
@@ -174,9 +179,11 @@ int undup_main(int argc,char **argv) {
     case 'K':
       gopts.cstats = true;
       break;
+#ifdef MSTATS
     case 'm':
       gopts.mstats = true;
       break;
+#endif
     case '5':
       hash_set(CH_MD5);
       break;
@@ -197,6 +204,12 @@ int undup_main(int argc,char **argv) {
     case 'h':
     case '?':
     default: /* '?' */
+#ifdef MSTATS
+      gopts.mstats = true;
+#else
+      gopts.mstats = false;
+#endif
+
       //++
       // = UNDUP(1)
       // :Author: A Liu Ly
@@ -231,7 +244,7 @@ int undup_main(int argc,char **argv) {
       fputs("\t-e: execute (disables dry-run mode)\n",stderr);
       // *-e*::
       //    creates hardlinks (disables the default, dry-run mode)
-      fputs("\t-m: shows memory stats\n",stderr);
+      if (gopts.mstats) fputs("\t-m: shows memory stats\n",stderr);
       // *-m*::
       //    Shows memory statistics
       fputs("\t-K: shows cache stats\n",stderr);
@@ -334,15 +347,18 @@ int undup_main(int argc,char **argv) {
     }
   }
 
+#ifdef MSTATS
   if (gopts.mstats) {
     struct mallinfo mi;
     malloc_stats();
     mi = mallinfo();
     vmsg("Allocated memory: %s\n", make_human_readable_str(mi.uordblks,0,0));
   }
+#endif
   fscanner_close(&fs);
 #ifdef _DEBUG
   muntrace();
+#ifdef MSTATS
   if (gopts.mstats) {
     struct mallinfo mi;
     mi = mallinfo();
@@ -351,6 +367,7 @@ int undup_main(int argc,char **argv) {
 	      make_human_readable_str(mi.uordblks,0,0));
     }
   }
+#endif
 #endif
   return 0;
 }
