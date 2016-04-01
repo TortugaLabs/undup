@@ -163,6 +163,9 @@ find the build status page
 
 ## Changes
 
+* 2.0.1: Minor updates
+  - Added error checks
+  - updated documentation
 * 2.0.0: C rewrite
   - Re-wrote it in C
 * 1.0.0: Initial PHP release
