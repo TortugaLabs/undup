@@ -12,7 +12,7 @@ script:
  - make clean
  - mkdir undup-${TRAVIS_TAG:=$(git describe)}
  - cp -a *.[ch1] LICENSE Makefile README.md lib regressions scripts undup-${TRAVIS_TAG:=$(git describe)}
- - tar zcvf undup-${TRAVIS_TAG:=$(git describe)}.tar.gz undup-${TRAVIS_TAG:=$(git describe)}
+ - tar zcf undup-${TRAVIS_TAG:=$(git describe)}.tar.gz undup-${TRAVIS_TAG:=$(git describe)}
  - echo Build Alpine Package
  - if [ ! -d $HOME/.abuild ] ; then mkdir $HOME/.abuild ; fi
  - echo PACKAGER_PRIVKEY=$(pwd)/$(echo *.rsa) > $HOME/.abuild/abuild.conf
