@@ -7,3 +7,6 @@ test
 cu-t.h
 regressions/tmp.*
 mtrace.data
+rootfs-*
+*.rsa
+*.rsa.pub

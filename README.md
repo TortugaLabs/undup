@@ -1,6 +1,6 @@
 # undup
 
-[![Build Status](https://api.travis-ci.org/alejandroliu/undup.png?branch=master)](http://travis-ci.org/alejandroliu/undup)
+[![Build Status](https://api.travis-ci.org/TortugaLabs/undup.png?branch=master)](http://travis-ci.org/TortugaLabs/undup)
 
 Track duplicate files and merge them as hardlinks
 

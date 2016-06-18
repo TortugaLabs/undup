@@ -1,4 +1,30 @@
-#
 language: c
-script: make GOPTZ=-O1 debug && make GOPTZ=-O1 check
 compiler: gcc
+install:
+ - ./proot4ci/setup alpine rootfs-alpine
+ - ./proot4ci/setup centos rootfs-centos
+before_script:
+ - export PATH=$PATH:$PWD/proot4ci/bin
+script:
+ - echo Standard build checks
+ - make GOPTZ=-O1 debug && make GOPTZ=-O1 check
+ - echo Build TARBALL
+ - mkdir undup-${TRAVIS_TAG:=$(git describe)}
+ - cp -a *.[ch1] LICENSE Makefile README.md lib regressions scripts undup-${TRAVIS_TAG:=$(git describe)}
+ - tar zcvf undup-${TRAVIS_TAG:=$(git describe)}.tar.gz undup-${TRAVIS_TAG:=$(git describe)}
+ 
+ - echo Build Alpine Package
+ - if [ ! -d $HOME/.abuild ] ; then mkdir $HOME/.abuild ; fi
+ - echo PACKAGER_PRIVKEY=$(pwd)/$(echo *.rsa) > $HOME/.abuild/abuild.conf
+ - make clean && proot -R alpine-rootfs sh -il -c 'make prod'
+ - make clean && proot -R alpine-rootfs sh -il -c 'abuild'
+ - cp -v $HOME/packages/*/*/*.apk .
+ - mkdir 
+addons:
+  apt:
+    packages:
+     - libtalloc-dev
+before_install:
+ - openssl aes-256-cbc -K $encrypted_15b85cd73fd2_key -iv $encrypted_15b85cd73fd2_iv
+  -in alejandro_liu@hotmail.com-5765ac50.rsa.enc -out alejandro_liu@hotmail.com-5765ac50.rsa
+  -d

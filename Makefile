@@ -84,10 +84,10 @@ debug:
 docs: undup.1 undup.adoc
 
 undup.1: undup.c
-	manify undup.c
+	type manify && manify undup.c || true
 
 undup.adoc: undup.c
-	manify --asciidoc undup.c > undup.adoc || rm -f undup.adoc
+	type manify && (manify --asciidoc undup.c > undup.adoc || rm -f undup.adoc) || true
 
 check:
 	# This macro checks that we have do not have prod build stuff
