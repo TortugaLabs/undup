@@ -28,3 +28,13 @@ before_install:
  - openssl aes-256-cbc -K $encrypted_15b85cd73fd2_key -iv $encrypted_15b85cd73fd2_iv
   -in alejandro_liu@hotmail.com-5765ac50.rsa.enc -out alejandro_liu@hotmail.com-5765ac50.rsa
   -d
+deploy:
+  provider: releases
+  api_key:
+    secure: UWPJSGLiL1bFOwsPbIcqwdteptYMKh0kghV0phMtIUyR/VxNF5yWMekwTan6LYP0BUOh7qpIbyJHOEugFwZ+60fSy26CqKl6Yj5OBNQveArgVg41Z2bZhRhCp6bHu3U4ga/7Ot4MsxZv6kS2acCLCHLlso8hNix2dGbXtB2PgoLliSZDS1ptXqeBs/n8AknXxeM90TfzbML68rGVGhYTV6o1LVJV5uuFZtkjBj33qXlHnCnUItEN6FrbVTKhLtW/dIGzzwTnPDD3n/02RCn3YPnreZS9Jx0u+tuoRDGlhgUZcWzYMk4pEOM33NbxIUW6YSkWEJF/+PMqBZiX6dMRLFnkvH91SjRheM/bXv1uA4Aa0D0kKtHPLjmZfvNugqnIiJSQizJOUaLuqXhU2mbS8T1XQI0H5f1d/6OiEnWdrrCgD7L/w7kbLgEcWRcE1RcgMHUMiXCcAHxD6Fjr6vfrIyr8gK2lCcufcJaKoJafq1z77sx2x35b+e/XY5YLGNYFk2uVQa5W7d5y7mNsSwlxl7FtU41offP+MLJOrb78I1YVBA9WcwAqbd27/0qy3pq7/ryJvXsfW+YUJQGMVuTM957RgK5XCQ3CIbjN1hb9NKEErUoITXuYuIaHxAX5Wkbtk2juagMDhIxVyuO/sYLH++Hz8g1n8CSJzYxtc2/QhHk=
+  skip_cleanup: true
+  file:
+   - undup-*.tar.gz
+   - undup-*.apk
+  on:
+    tags: true
