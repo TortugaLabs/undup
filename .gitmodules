@@ -7,3 +7,6 @@
 [submodule "lib/crypto-algorithms"]
 	path = lib/crypto-algorithms
 	url = https://github.com/B-Con/crypto-algorithms.git
+[submodule "proot4ci"]
+	path = proot4ci
+	url = https://github.com/TortugaLabs/proot4ci.git
