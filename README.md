@@ -19,10 +19,14 @@ alternatives referred here) is the use of file to cache hashes.
 
 ## Install
 
-Currently, **undup** is only distributed in source form.  To compile
-**undup** you need a **gcc-4.8** compiler.  I have only tested
-building it with [Centos-7](https://www.centos.org/download/) and
-[Ubuntu](http://www.ubuntu.com/).  To download the source from GitHub
+**undup** is distributed in source form and as an
+[AlpineLinux](http://www.alpinelinux.org) x86_64 package.  The _recommended_
+way to install **undup** is to compile from source code.
+
+To compile **undup** you need a **gcc-4.8** compiler.  I have only tested
+building it with [Centos-7](https://www.centos.org/download/), 
+[AlpineLinux](http://www.alpinelinux.org) and
+[Ubuntu](http://www.ubuntu.com/).  Download the source from GitHub
 and enter:
 
 ```
@@ -31,7 +35,7 @@ make prod
 
 Then you can copy the resulting `undup` binary files to the
 appropriate location (usually `/usr/bin`).  You can also copy the
-provided `undup.1` man page.
+provided `undup.1` man page to the appropriate location.
 
 I also the include the `XBUILD` script to create an executable for the
 _ARM_ architecture which I use in my NAS device.  Customize this file
@@ -159,7 +163,7 @@ Few alternatives:
 
 This project makes use of [TravisCI](https://travis-ci.org/).  You can
 find the build status page
-[here](https://travis-ci.org/alejandroliu/undup).
+[here](https://travis-ci.org/TortugaLabs/undup).
 
 ## Changes
 
