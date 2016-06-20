@@ -1,6 +1,6 @@
 = UNDUP(1)
 :doctype:	manpage
-:Date:	2016-03-24
+:Date:	2016-06-20
 :man manual:	User commands
 :man source:	undup.c
 :Author: A Liu Ly

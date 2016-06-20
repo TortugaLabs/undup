@@ -111,8 +111,22 @@ test: test.c $(OBJS) $(TESTS) $(GDBM_LIBDIR)/libgdbm.a
 	$(CC) $(CFLAGS) $(CU_CFLAGS) -o test \
 		test.c $(OBJS) $(TESTS) $(GDBM_LIBDIR)/libgdbm.a
 
-undup: $(OBJS) main.o $(GDBM_LIBDIR)/libgdbm.a
+undup: vcheck $(OBJS) main.o $(GDBM_LIBDIR)/libgdbm.a
 	$(LD) $(LDFLAGS) $(CFLAGS) -o undup main.o $(OBJS) $(GDBM_LIBDIR)/libgdbm.a
+
+vcheck:
+	: VCHECK
+	if type git ; then \
+	  vname="$$(git describe --dirty=_Exp)" ; \
+	  if [ -n "$$vname" ] ; then \
+	    echo "const char version[] = \"$$vname\";" > version.h.t ;\
+	    if cmp version.h.t version.h ; then \
+	      rm -f version.h.t ; \
+	    else \
+	      mv version.h.t version.h ; \
+	    fi ;\
+	  fi ;\
+	fi
 
 # pull in dependancy...
 -include $(OBJS:.o=.d)

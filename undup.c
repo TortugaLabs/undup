@@ -15,7 +15,7 @@
  *    You should have received a copy of the GNU General Public License along
  *    with this program; if not, see <http://www.gnu.org/licenses>
  */
-const char version[] = "2.0.0";
+#include "version.h"
 #include "undup.h"
 #include "dedup.h"
 #include "utils.h"
@@ -253,7 +253,7 @@ int undup_main(int argc,char **argv) {
       fputs("\t-s: scan only\n",stderr);
       // *-s*::
       //    only scans the file system
-      fputs("\t-5: use MD5 hashes\n",stderr);
+      fputs("\t-5: use MD5 hashes (default)\n",stderr);
       // *-5*::
       //    use MD5 for hashes
       fputs("\t-S: use SHA256 hashes\n",stderr);

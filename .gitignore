@@ -9,4 +9,4 @@ regressions/tmp.*
 mtrace.data
 rootfs-*
 *.rsa
-*.rsa.pub
+
