@@ -1,10 +1,5 @@
 language: c
 compiler: gcc
-install:
- - ./proot4ci/setup alpine rootfs-alpine
- - echo ./proot4ci/setup centos rootfs-centos
-before_script:
- - export PATH=$PATH:$PWD/proot4ci/bin
 script:
  - echo Standard build checks
  - make GOPTZ=-O1 debug && make GOPTZ=-O1 check
@@ -13,22 +8,6 @@ script:
  - mkdir undup-${TRAVIS_TAG:-$(git describe)}
  - cp -a *.[ch] undup.1 LICENSE Makefile README.md lib regressions scripts undup-${TRAVIS_TAG:-$(git describe)}
  - tar zcf undup-${TRAVIS_TAG:-$(git describe)}.tar.gz undup-${TRAVIS_TAG:-$(git describe)}
- - echo Build Alpine Package
- - if [ ! -d $HOME/.abuild ] ; then mkdir $HOME/.abuild ; fi
- - echo PACKAGER_PRIVKEY=$(pwd)/$(echo *.rsa) > $HOME/.abuild/abuild.conf
- - make realclean
- - proot -R rootfs-alpine sh -il -c 'make prod'
- - proot -R rootfs-alpine sh -il -c 'abuild'
- - cp -v $HOME/packages/*/*/*.apk .
- - ls
-addons:
-  apt:
-    packages:
-     - libtalloc-dev
-before_install:
- - openssl aes-256-cbc -K $encrypted_15b85cd73fd2_key -iv $encrypted_15b85cd73fd2_iv
-  -in alejandro_liu@hotmail.com-5765ac50.rsa.enc -out alejandro_liu@hotmail.com-5765ac50.rsa
-  -d
 deploy:
   provider: releases
   api_key:
@@ -37,6 +16,5 @@ deploy:
   file_glob: true
   file:
    - undup-*.tar.gz
-   - undup-*.apk
   on:
     tags: true
