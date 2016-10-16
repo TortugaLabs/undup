@@ -167,7 +167,7 @@ find the build status page
 
 ## Changes
 
-* ????:
+* 2.0.2:
   - Automatically update version display
   - Some documentation clarification
 * 2.0.1: Minor updates
