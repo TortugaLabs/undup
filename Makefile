@@ -33,11 +33,12 @@ OPTIMIZ = -g -D_DEBUG $(GOPTZ) # Debug build
 
 CFLAGS = $(OPTIMIZ) $(PEDANTIC) $(INCDIRS) $(XCFLAGS)
 #-O2 -I$(UTHASH_DIR)/src -I$(GDBM_LIBDIR)/src #-DHASH_TYPE=SHA256
-LIBDEPS = $(GDBM_LIBDIR)/libgdbm.a
 
-GDBM_VERSION=1.11
+GDBM_VERSION=1.12
 GDBM_LIBDIR=$(EXTLIBDIR)/gdbm-$(GDBM_VERSION)
 GDBM_UNPACK=[ -d $(GDBM_LIBDIR) ] || ( cd $(EXTLIBDIR) && tar zxf gdbm-$(GDBM_VERSION).tar.gz )
+GDBM_DEP=$(GDBM_LIBDIR)/libgdbm.a
+GDBM_REF=$(GDBM_LIBDIR)/libgdbm.a
 
 UTHASH_DIR = $(EXTLIBDIR)/uthash
 CRYPTO_DIR = $(EXTLIBDIR)/crypto-algorithms
@@ -106,13 +107,13 @@ _check: test
 	$(MTRACE) ./test
 	$(CU_DIR)/cu-check-regressions regressions
 
-test: test.c $(OBJS) $(TESTS) $(GDBM_LIBDIR)/libgdbm.a
+test: test.c $(OBJS) $(TESTS) $(GDBM_DEP)
 	./scripts/gentests -o cu-t.h $(TESTS)
 	$(CC) $(CFLAGS) $(CU_CFLAGS) -o test \
-		test.c $(OBJS) $(TESTS) $(GDBM_LIBDIR)/libgdbm.a
+		test.c $(OBJS) $(TESTS) $(GDBM_REF)
 
-undup: vcheck $(OBJS) main.o $(GDBM_LIBDIR)/libgdbm.a
-	$(LD) $(LDFLAGS) $(CFLAGS) -o undup main.o $(OBJS) $(GDBM_LIBDIR)/libgdbm.a
+undup: vcheck $(OBJS) main.o $(GDBM_DEP)
+	$(LD) $(LDFLAGS) $(CFLAGS) -o undup main.o $(OBJS) $(GDBM_REF)
 
 vcheck:
 	: VCHECK
@@ -140,7 +141,7 @@ vcheck:
 
 $(GDBM_LIBDIR)/libgdbm.a:
 	$(GDBM_UNPACK)
-	cd $(GDBM_LIBDIR) && ./configure $(CFG_TARGET) && make
+	cd $(GDBM_LIBDIR) && ./configure $(CFG_TARGET) && make 
 	cd $(GDBM_LIBDIR) && $(AR) cr libgdbm.a src/*.o
 
 clean:

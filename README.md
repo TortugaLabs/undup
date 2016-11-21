@@ -167,6 +167,11 @@ find the build status page
 
 ## Changes
 
+* 2.1.0:
+  - Updated Makefile so it is also possible to build using the current
+    os libgdbm instead of the embedded copy using:
+	- make GDBM_UNPACK=: GDBM_DEP= GDBM_REF=-lgdbm prod
+  - Upgrading gdbm to v1.12  
 * 2.0.2:
   - Automatically update version display
   - Some documentation clarification

@@ -7,6 +7,8 @@ script:
  - make realclean
  - mkdir undup-${TRAVIS_TAG:-$(git describe)}
  - cp -a *.[ch] undup.1 LICENSE Makefile README.md lib regressions scripts undup-${TRAVIS_TAG:-$(git describe)}
+ - echo 'const char version[] = "'${TRAVIS_TAG:-$(git describe)}'";' > undup-${TRAVIS_TAG:-$(git describe)}/version.h
+ - cat undup-*/version.h
  - tar zcf undup-${TRAVIS_TAG:-$(git describe)}.tar.gz undup-${TRAVIS_TAG:-$(git describe)}
 deploy:
   provider: releases
