@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -eu -o pipefail
 echo Standard build checks
 
@@ -16,6 +16,7 @@ echo 'const char version[] = "'"$VTAG"'";' > undup-$VTAG/version.h
 cat undup-$VTAG/version.h
 tar zcf undup-$VTAG.tar.gz undup-$VTAG
 
+sudo true
 exit 0
 
 # Create Alpine Linux packages
