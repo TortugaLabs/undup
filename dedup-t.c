@@ -23,6 +23,8 @@
 #include "calchash.h"
 #include "utils.h"
 #include <malloc.h>
+#include <string.h>
+#include <stdlib.h>
 
 #define BLKSZ	4096
 
@@ -61,21 +63,59 @@ TEST(dedup_cluster_test) {
   rm_rf(base);
 }
 
+#define MAXWORDS 1024
+static char *words[MAXWORDS];
+static int cmpstringp(const void *p1, const void *p2) {
+  /* The actual arguments to this function are "pointers to
+    pointers to char", but strcmp(3) arguments are "pointers
+    to char", hence the following cast plus dereference */
+  return strcmp(* (char * const *) p1, * (char * const *) p2);
+}
+#define MAXLINES 1024
+struct lines_t {
+  int start;
+  int count;
+};
+static struct lines_t lines[MAXLINES];
+static int cmplines(const void *p1, const void *p2) {
+  int i, r;
+  struct lines_t *l1 = (struct lines_t *)p1;
+  struct lines_t *l2 = (struct lines_t *)p2;
+  for (i=0; i < l1->count && i < l2->count ; i++) {
+    r = strcmp(words[l1->start+i],words[l2->start+i]);
+    if (r) return r;
+  }
+  return l1->count - l2->count;
+}
+  
+
 static void do_dedup(struct fs_dat *fs,ino_t *inos,int icnt,struct stat *stp,void *ext) {
   char **fpt;
-  for (int i = 0; i < icnt; i++) {
+  int wk = 0, lk = 0, i;
+  for (i = 0; i < icnt; i++) {
     fpt = inodetab_get(fs->itab,inos[i],NULL);
     if (fpt == NULL || *fpt==NULL) fatal(ENOENT,"Missing i-node %llx",(long long)inos[i]);
-    printf("%d:", i);
+    int first = wk;
     while (*fpt) {
-      printf(" %s",*(fpt++));
+      words[wk++] = *(fpt++);
+    }
+    qsort(&words[first],wk - first,sizeof(char *),cmpstringp);
+    lines[lk].start = first;
+    lines[lk].count = wk - first;
+    lk++;
+  }
+  qsort(lines, lk, sizeof(struct lines_t), cmplines);
+  for (i = 0; i < lk ; i++) {
+    printf("%d:", i);
+    for (int j = 0; j < lines[i].count ; j++) {
+      putchar(' ');
+      fputs(words[lines[i].start+j],stdout);
     }
     putchar('\n');
   }
   if(stp) printf("STP!=NULL\n");
   if(ext) printf("EXT!=NULL\n");
 }
-
 
 static void dedup_test(const char *msg,char *base) {
   struct fs_dat fs;
