@@ -24,10 +24,13 @@ alternatives referred here) is the use of file to cache hashes.
 way to install **undup** is to compile from source code.
 
 To compile **undup** you need a **gcc-4.8** compiler.  I have only tested
-building it with [Centos-7](https://www.centos.org/download/), 
-[AlpineLinux](http://www.alpinelinux.org) and
-[Ubuntu](http://www.ubuntu.com/).  Download the source from GitHub
-and enter:
+building it with :
+
+- [Centos-7](https://www.centos.org/)
+- [AlpineLinux](http://www.alpinelinux.org)
+- [Ubuntu](http://www.ubuntu.com/)
+
+Download the source from GitHub and enter:
 
 ```
 make prod
@@ -131,7 +134,7 @@ This software makes use of the following libraries:
 * [crypto-algorithms](https://github.com/B-Con/crypto-algorithms/) -
   Basic implementations of standard cryptography algorithms, like AES, MD5,
   and SHA-1.  Public domain.
-* [GDBM-1.11](http://www.gnu.org.ua/software/gdbm/) - library of
+* [GDBM](http://www.gnu.org.ua/software/gdbm/) - library of
   database functions to create and manipulate a hashed database.
   Licensed as GPLv3.
 * human_readable.c from [busybox](http://www.busybox.net/) - GPLv2
@@ -166,6 +169,9 @@ find the build status page
 [here](https://travis-ci.org/TortugaLabs/undup).
 
 ## Changes
+
+* 2.1.1:
+  - Fixing tests
 
 * 2.1.0:
   - Updated Makefile so it is also possible to build using the current
