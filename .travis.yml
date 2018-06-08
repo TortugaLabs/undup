@@ -1,5 +1,10 @@
 language: c
 compiler: gcc
+addons:
+  apt:
+    packages:
+    - fakeroot
+    - fakechroot
 script:
 - type fakechroot
 - type fakeroot
