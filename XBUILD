@@ -9,4 +9,5 @@ TARGET=arm-mv5sft-linux-gnueabi
 make \
   TARGET=$TARGET CC=$TARGET-gcc LD=$TARGET-gcc AR=$TARGET-ar \
   CFG_TARGET=--host=$TARGET XCFLAGS="-D_FILE_OFFSET_BITS=64" \
+  EMBED_GDBM=1 \
   "$@"
