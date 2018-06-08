@@ -1,6 +1,9 @@
 language: c
 compiler: gcc
 script:
+- type fakechroot
+- type fakeroot
+- exit 1
 - echo Standard build checks
 - make GOPTZ=-O1 debug && make GOPTZ=-O1 check
 - echo Build TARBALL
