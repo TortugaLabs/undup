@@ -50,7 +50,7 @@ static void cb(char *dir, char *file,struct stat *stdat,void *ext) {
   HASH_ADD_INT(cbdata->lines,id, ln);
 }
 
-int line_sort(struct fsout *a,struct fsout *b) {
+static int line_sort(struct fsout *a,struct fsout *b) {
   return strcmp(a->text, b->text);
 }
 
