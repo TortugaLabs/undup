@@ -9,6 +9,7 @@ addons:
 script:
 - type fakechroot
 - type fakeroot
+- type proot
 - exit 1
 - echo Standard build checks
 - make GOPTZ=-O1 debug && make GOPTZ=-O1 check
