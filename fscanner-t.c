@@ -27,14 +27,37 @@
 #include "inodetab.h"
 #include "duptable.h"
 #include "test.h"
+#include <uthash.h>
+#include <string.h>
+
+struct fsout {
+  int id;
+  UT_hash_handle hh;
+  char text[1];
+};
+struct cb_data {
+  struct fsout *lines;
+  int cid;
+};
+  
 
 static void cb(char *dir, char *file,struct stat *stdat,void *ext) {
-  printf("%s - %s %d %d\n", dir,file, stdat ==NULL, ext == NULL);
+  struct cb_data *cbdata = (struct cb_data *)ext;
+  int id = ++(cbdata->cid), k;
+  struct fsout *ln = (struct fsout *)mymalloc(sizeof(struct fsout)+( k = strlen(dir)+strlen(file)+128));
+  ln->id = id;
+  snprintf(ln->text,k, "%s - %s %d %d", dir, file, stdat == NULL, ext == NULL);
+  HASH_ADD_INT(cbdata->lines,id, ln);
+}
+
+int line_sort(struct fsout *a,struct fsout *b) {
+  return strcmp(a->text, b->text);
 }
 
 TEST(fscanner_checked) {
-  char *base, tpl[] = "tmpdirXXXXXXX";
+  char *base, tpl[] = "/tmp/tmpdirXXXXXXX";
   base = mkdtemp(tpl);
+  //fprintf(stderr,"%s %s\n",base,tpl);
   assertTrue(base);
   if (base == NULL) return;
   mkfile(base,"msg1.txt","one");
@@ -46,8 +69,9 @@ TEST(fscanner_checked) {
   mkfile(base,"abc.txt","datafactor");
   mkfile(base,"abcd.txt","datafactors");
 
+  struct cb_data cbdata = { .lines = NULL, .cid = 0 };
   struct fs_dat fsdat;
-  struct cat_cb catcb = { .callback = cb, .ext = NULL };
+  struct cat_cb catcb = { .callback = cb, .ext = (void *)&cbdata };
   ino_t ino;
   fscanner_init(&fsdat, base, false);
   fscanner(&fsdat, &catcb);
@@ -61,6 +85,13 @@ TEST(fscanner_checked) {
 
   fscanner_close(&fsdat);
   rm_rf(base);
+  
+  // output stuff
+  HASH_SORT(cbdata.lines, line_sort);
+  struct fsout *p;
+  for (p = cbdata.lines ; p != NULL ; p = (struct fsout *)(p->hh.next)) {
+    puts(p->text);
+  }
 }
 TEST(fscanner_test1) {
   /* Generate a test file system */

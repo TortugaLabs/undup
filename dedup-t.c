@@ -29,7 +29,7 @@
 TEST(dedup_cluster_test) {
   hash_set(CH_HASH_TYPE);
 
-  char *base, tpl[] = "tmpdirXXXXXXX";
+  char *base, tpl[] = "/tmp/tmpdirXXXXXXX";
   base = mkdtemp(tpl);
   assertTrue(base);
   if (base == NULL) return;
@@ -72,7 +72,6 @@ static void do_dedup(struct fs_dat *fs,ino_t *inos,int icnt,struct stat *stp,voi
     }
     putchar('\n');
   }
-
   if(stp) printf("STP!=NULL\n");
   if(ext) printf("EXT!=NULL\n");
 }
@@ -108,7 +107,7 @@ TEST(dedup_undup1) {
   m1 = mallinfo();
 
   static const char bytes[]="abcdefghijklmopqrstuvwxyzABCDEFGHIJKLMOPQRSTUVWXYZ0123456789";
-  char *base, tpl[] = "tmpdirXXXXXXX", buf[BLKSZ*3];
+  char *base, tpl[] = "/tmp/tmpdirXXXXXXX", buf[BLKSZ*3];
   base = mkdtemp(tpl);
   assertTrue(base);
   if (base == NULL) return;
