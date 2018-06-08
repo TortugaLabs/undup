@@ -5,6 +5,7 @@ addons:
     packages:
     - fakeroot
     - fakechroot
+    - proot
 script:
 - type fakechroot
 - type fakeroot
