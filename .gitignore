@@ -10,3 +10,4 @@ mtrace.data
 rootfs-*
 *.rsa
 
+cu-check-regressions

@@ -90,6 +90,10 @@ undup.1: undup.c
 undup.adoc: undup.c
 	type manify && (manify --asciidoc undup.c > undup.adoc || rm -f undup.adoc) || true
 
+cu-check-regressions: $(EXTLIBDIR)/cu-patch $(CU_DIR)/cu-check-regressions
+	patch -o cu-check-regressions $(CU_DIR)/cu-check-regressions $(EXTLIBDIR)/cu-patch || ( rm -f cu-check-regressions ; exit 1)
+	chmod 755 cu-check-regressions
+
 check:
 	# This macro checks that we have do not have prod build stuff
 	# and/or using the correct target architecture
@@ -102,10 +106,10 @@ check:
 		echo $$t > _debug
 	make _check
 
-_check: test
+_check: test cu-check-regressions
 	[ -d regressions ] || mkdir regressions
 	$(MTRACE) ./test
-	$(CU_DIR)/cu-check-regressions regressions
+	./cu-check-regressions regressions
 
 test: test.c $(OBJS) $(TESTS) $(GDBM_DEP)
 	./scripts/gentests -o cu-t.h $(TESTS)
@@ -146,7 +150,7 @@ $(GDBM_LIBDIR)/libgdbm.a:
 
 clean:
 	rm -f *.o *.d mtrace.data
-	rm -f test cu-t.h regressions/tmp.*
+	rm -f test cu-t.h regressions/tmp.* cu-check-regressions
 	rm -f undup
 
 realclean: clean
