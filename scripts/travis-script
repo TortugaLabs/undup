@@ -73,7 +73,19 @@ build_alpine() {
   cp -a alpine/. $chrootdir/build/assets
   rm -f $chrootdir/build/.abuild
   ln -sf assets $chrootdir/build/.abuild
-  sed 's/<VTAG>/'"$VTAG"'/' < alpine/APKBUILD > $chrootdir/build/APKBUILD
+
+  # Encrypt Key with thsi comand
+  # openssl enc -aes-256-cbc -salt -in builder-5b1ae402.rsa -out builder-5b1ae402.rsa.enc -k $alpine_signing_key
+  openssl enc -aes-256-cbc -d \
+	-in alpine/builder-5b1ae402.rsa.enc \
+	-out $chrootdir/build/.abuild/builder-5b1ae402.rsa \
+	-k $alpine_signing_key
+
+  local apk_ver=${TRAVIS_TAG:-$(git describe |sed 's/-\([0-9]*\)-\([^-]*\)$/.\1_git'"$(date +%Y%m%d)"'/')}
+  sed \
+	-e 's/<VTAG>/'"$VTAG"'/' \
+	-e 's/<PKGVER>/'"$apk_ver"'/' \
+	< alpine/APKBUILD > $chrootdir/build/APKBUILD
 
   grep -q "^$USER:" $chrootdir/etc/group || sudo chroot $chrootdir addgroup -g $(id -g) $USER
   grep -q "^$USER:" $chrootdir/etc/passwd || sudo chroot $chrootdir adduser -h /build -H -D -G $USER -u $(id -u) $USER

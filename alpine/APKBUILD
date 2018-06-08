@@ -1,8 +1,8 @@
 # Contributor: Alejandro Liu <alejandro_liu@hotmail.com>
 # Maintainer: Alejandro Liu <alejandro_liu@hotmail.com>
 pkgname=undup
+pkgver=<PKGVER>
 vtag=<VTAG>
-pkgver=$(echo $vtag | tr - .)
 pkgrel=0
 pkgdesc="Track duplicate files and merge them as hardlinks"
 url="https://github.com/TortugaLabs/undup"
