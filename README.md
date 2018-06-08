@@ -172,7 +172,7 @@ find the build status page
 
 * 2.1.1:
   - Fixing tests
-
+  - Updating libraries
 * 2.1.0:
   - Updated Makefile so it is also possible to build using the current
     os libgdbm instead of the embedded copy using:
