@@ -85,7 +85,7 @@ static void _populate(char *base, int *cnt, int max) {
 
 char *populate(char *base, int max) {
   int cnt = 0;
-  strcpy(base,"tmpdirXXXXXXX");
+  strcpy(base,"/tmp/tmpdirXXXXXXX");
   base = mkdtemp(base);
   if (base == NULL) return NULL;
   while (cnt < max) _populate(base,&cnt,max);
@@ -160,5 +160,6 @@ int main(int argc, char **argv) {
   CU_RUN(argc, argv);
 
   muntrace();
+  if (cu_fail_tests) exit(1);
   return 0;
 }

@@ -18,12 +18,19 @@
 #include <cu.h>
 #include "utils.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include "test.h"
 
 TEST(utils_printhex) {
   printhex(stdout,"\xca\xfe\x15\xba\xd1",5,0);
   putc('\n',stdout);
   fflush(stdout);
+}
+
+static size_t no_mem_value() {
+  char *x = getenv("NO_MEM_VALUE");
+  if (x) return atol(x);
+  return -1;
 }
 
 TEST(mymalloc1) {
@@ -33,7 +40,8 @@ TEST(mymalloc1) {
   if (p) free(p);
 
   if (forktest(ENOMEM)) {
-    q = _mymalloc(-1,__FILE__,__LINE__); if (q) free(q);
+    close(2);
+    q = _mymalloc(no_mem_value(),__FILE__,__LINE__); if (q) free(q);
     exit(0);
   }
 }
