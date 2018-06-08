@@ -1,8 +1,12 @@
 #!/bin/bash
+alpine_mirror=http://nl.alpinelinux.org/alpine
+
 set -eu -o pipefail
 echo Standard build checks
 
-make GOPTZ=-O1 debug && make GOPTZ=-O1 check
+#~ make GOPTZ=-O1 debug && make GOPTZ=-O1 check
+#~ make realclean
+#~ make GOPTZ=-O1 debug && make GOPTZ=-O1 EMBED_GDBM=1 check
 
 echo Build TARBALL
 make realclean
@@ -16,53 +20,76 @@ echo 'const char version[] = "'"$VTAG"'";' > undup-$VTAG/version.h
 cat undup-$VTAG/version.h
 tar zcf undup-$VTAG.tar.gz undup-$VTAG
 
-sudo true
-exit 0
+if ! sudo true ; then
+  echo "Exiting... the rest of the script requires sudo priviledges"
+  exit 0
+fi
 
-# Create Alpine Linux packages
-alpine_mirror=http://nl.alpinelinux.org/alpine
-release=3.7
-version=2.9.1-r2
-
-alpine_dir=alpine-v$release
-mkdir -p ${alpine_dir}
-apkfile=$alpine_dir/apk-tools-static.apk
-[ ! -f $apkfile  ] && wget -O$apkfile ${alpine_mirror}/v${release}/main/x86_64/apk-tools-static-${version}.apk
-[ ! -f $alpine_dir/sbin/apk.static ] && tar -zxf $apkfile -C $alpine_dir
-chrootdir=$alpine_dir/chroot
-set -x
-sudo $alpine_dir/sbin/apk.static \
-	--repository ${alpine_mirror}/v${release}/main \
-	-U \
-	--allow-untrusted \
-	--root ${chrootdir} \
-	--initdb \
-	add alpine-base alpine-sdk
-sudo chmod 777 $chrootdir
-mkdir -p $chrootdir/build
-cp -a undup-$VTAG.tar.gz $chrootdir/build/undup.tar.gz
-cp -a APKBUILD $chrootdir/build
-
-grep -q "^$USER:" $chrootdir/etc/group || sudo chroot $chrootdir addgroup -g $(id -g) $USER
-grep -q "^$USER:" $chrootdir/etc/passwd || sudo chroot $chrootdir adduser -h /build -H -D -G $USER -u $(id -u) $USER
-
-# proot -R $chrootdir -w $chrootdir/build /bin/sh -il
 rmount() {
-  local d
+  local chrootdir="$1" d
+  [ -z "$chrootdir" ] && return
   for d in dev sys proc tmp
   do
-    sudo mount --bind /$d $chrootdir/$d
+    sudo mount --bind /$d $chrootdir/$d || :
   done
 }
 rumount() {
-  local d
+  local chrootdir="$1" d
+  [ -z "$chrootdir" ] && return
   for d in dev sys proc tmp
   do
-    sudo umount $chrootdir/$d
+    sudo umount $chrootdir/$d || :
   done
 }
-rmount ; trap "rumount" EXIT
-sudo chroot $chrootdir bin/sh -il
+
+build_alpine() {
+  # Create Alpine Linux packages
+  local release="$1" version
+
+  case "$release" in
+    3.7)  version=2.9.1-r2 ;;
+    *) echo "Unsupported release: $release"; exit 1 ;;
+  esac
+  
+  local alpine_dir=alpine-v$release
+  mkdir -p ${alpine_dir}
+  
+  local apkfile=$alpine_dir/apk-tools-static.apk
+  [ ! -f $apkfile  ] && wget -O$apkfile ${alpine_mirror}/v${release}/main/x86_64/apk-tools-static-${version}.apk
+  [ ! -f $alpine_dir/sbin/apk.static ] && tar -zxf $apkfile -C $alpine_dir
+
+  local chrootdir=$alpine_dir/chroot
+  sudo $alpine_dir/sbin/apk.static \
+	  --repository ${alpine_mirror}/v${release}/main \
+	  -U \
+	  --allow-untrusted \
+	  --root ${chrootdir} \
+	  --initdb \
+	  add alpine-base alpine-sdk gdbm gdbm-dev
+
+  sudo chmod 777 $chrootdir
+  mkdir -p $chrootdir/build/assets
+  cp -a undup-$VTAG.tar.gz $chrootdir/build/undup-$VTAG.tar.gz
+  cp -a alpine/. $chrootdir/build/assets
+  rm -f $chrootdir/build/.abuild
+  ln -sf assets $chrootdir/build/.abuild
+  sed 's/<VTAG>/'"$VTAG"'/' < alpine/APKBUILD > $chrootdir/build/APKBUILD
+
+  grep -q "^$USER:" $chrootdir/etc/group || sudo chroot $chrootdir addgroup -g $(id -g) $USER
+  grep -q "^$USER:" $chrootdir/etc/passwd || sudo chroot $chrootdir adduser -h /build -H -D -G $USER -u $(id -u) $USER
+
+  rm -rf $chrootdir/build/packages # Empty this so we don't pick up strays...
+  rmount $chrootdir; trap "rumount $chrootdir" EXIT
+  sudo chroot $chrootdir su - -s /bin/sh $USER  -c abuild
+  rumount $chrootdir ; trap "" EXIT
+
+  find $chrootdir/build/packages -name '*.apk' | (while read fp
+  do
+    nm=$(basename $fp)
+    cp -a "$fp" "alpine-v${release},$nm"
+    ls -sh "alpine-v${release},$nm"
+  done)
+}
 
 #~ mknod -m 666 ${chrootdir}/dev/full c 1 7
 #~ mknod -m 666 ${chrootdir}/dev/ptmx c 5 2
@@ -73,3 +100,6 @@ sudo chroot $chrootdir bin/sh -il
 #~ cp /etc/resolv.conf ${chrootdir}/resolv.conf
 #~ mkdir -p ${chrootdir}/root
 #~ /sbin/chroot ${chrootdir} /bin/sh
+
+build_alpine 3.7
+

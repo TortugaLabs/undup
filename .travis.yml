@@ -1,11 +1,6 @@
 language: c
 compiler: gcc
-addons:
-  apt:
-    packages:
-    - fakeroot
-    - fakechroot
-    - proot
+sudo: required
 script: scripts/travis-script
 deploy:
   provider: releases
@@ -15,6 +10,7 @@ deploy:
   file_glob: true
   file:
    - undup-*.tar.gz
+   - *.apk
   on:
     repo: TortugaLabs/undup
     tags: true

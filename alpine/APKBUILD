@@ -1,7 +1,8 @@
 # Contributor: Alejandro Liu <alejandro_liu@hotmail.com>
 # Maintainer: Alejandro Liu <alejandro_liu@hotmail.com>
 pkgname=undup
-pkgver=${TRAVIS_TAG:=$(git describe | tr - . | tr -dc .0-9 )}
+vtag=<VTAG>
+pkgver=$(echo $vtag | tr - .)
 pkgrel=0
 pkgdesc="Track duplicate files and merge them as hardlinks"
 url="https://github.com/TortugaLabs/undup"
@@ -14,25 +15,24 @@ install=""
 subpackages=""
 source=""
 
-_builddir=
+builddir="$srcdir/$pkgname-$vtag"
+
 prepare() {
-	local i
-	cd "$_builddir"
-	for i in $source; do
-		case $i in
-		*.patch) msg $i; patch -p1 -i "$srcdir"/$i || return 1;;
-		esac
-	done
+  tar -zxf "$pkgname-$vtag.tar.gz" -C "$srcdir"
 }
 
 build() {
-	cd "$_builddir"
-	make clean && make prod || return 1
+  cd "$builddir"
+  make clean && make prod || return 1
+}
+
+check() {
+  :
 }
 
 package() {
-	cd "$_builddir"
-	mkdir -p "$pkgdir"/usr/bin
-	cp undup "$pkgdir"/usr/bin
+  cd "$builddir"
+  mkdir -p "$pkgdir"/usr/bin
+  cp undup "$pkgdir"/usr/bin
 }
 
