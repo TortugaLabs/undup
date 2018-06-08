@@ -1,0 +1,74 @@
+#!/bin/sh
+set -eu -o pipefail
+echo Standard build checks
+
+make GOPTZ=-O1 debug && make GOPTZ=-O1 check
+
+echo Build TARBALL
+make realclean
+
+VTAG=${TRAVIS_TAG:-$(git describe)}
+
+rm -rf undup-$VTAG
+mkdir undup-$VTAG
+cp -a *.[ch] undup.1 LICENSE Makefile README.md lib regressions scripts undup-$VTAG
+echo 'const char version[] = "'"$VTAG"'";' > undup-$VTAG/version.h
+cat undup-$VTAG/version.h
+tar zcf undup-$VTAG.tar.gz undup-$VTAG
+
+exit 0
+
+# Create Alpine Linux packages
+alpine_mirror=http://nl.alpinelinux.org/alpine
+release=3.7
+version=2.9.1-r2
+
+alpine_dir=alpine-v$release
+mkdir -p ${alpine_dir}
+apkfile=$alpine_dir/apk-tools-static.apk
+[ ! -f $apkfile  ] && wget -O$apkfile ${alpine_mirror}/v${release}/main/x86_64/apk-tools-static-${version}.apk
+[ ! -f $alpine_dir/sbin/apk.static ] && tar -zxf $apkfile -C $alpine_dir
+chrootdir=$alpine_dir/chroot
+set -x
+sudo $alpine_dir/sbin/apk.static \
+	--repository ${alpine_mirror}/v${release}/main \
+	-U \
+	--allow-untrusted \
+	--root ${chrootdir} \
+	--initdb \
+	add alpine-base alpine-sdk
+sudo chmod 777 $chrootdir
+mkdir -p $chrootdir/build
+cp -a undup-$VTAG.tar.gz $chrootdir/build/undup.tar.gz
+cp -a APKBUILD $chrootdir/build
+
+grep -q "^$USER:" $chrootdir/etc/group || sudo chroot $chrootdir addgroup -g $(id -g) $USER
+grep -q "^$USER:" $chrootdir/etc/passwd || sudo chroot $chrootdir adduser -h /build -H -D -G $USER -u $(id -u) $USER
+
+# proot -R $chrootdir -w $chrootdir/build /bin/sh -il
+rmount() {
+  local d
+  for d in dev sys proc tmp
+  do
+    sudo mount --bind /$d $chrootdir/$d
+  done
+}
+rumount() {
+  local d
+  for d in dev sys proc tmp
+  do
+    sudo umount $chrootdir/$d
+  done
+}
+rmount ; trap "rumount" EXIT
+sudo chroot $chrootdir bin/sh -il
+
+#~ mknod -m 666 ${chrootdir}/dev/full c 1 7
+#~ mknod -m 666 ${chrootdir}/dev/ptmx c 5 2
+#~ mknod -m 644 ${chrootdir}/dev/random c 1 8
+#~ mknod -m 644 ${chrootdir}/dev/urandom c 1 9
+#~ mknod -m 666 ${chrootdir}/dev/zero c 1 5
+#~ mknod -m 666 ${chrootdir}/dev/tty c 5 0
+#~ cp /etc/resolv.conf ${chrootdir}/resolv.conf
+#~ mkdir -p ${chrootdir}/root
+#~ /sbin/chroot ${chrootdir} /bin/sh
