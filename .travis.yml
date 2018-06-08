@@ -1,22 +1,25 @@
 language: c
 compiler: gcc
 script:
- - echo Standard build checks
- - make GOPTZ=-O1 debug && make GOPTZ=-O1 check
- - echo Build TARBALL
- - make realclean
- - mkdir undup-${TRAVIS_TAG:-$(git describe)}
- - cp -a *.[ch] undup.1 LICENSE Makefile README.md lib regressions scripts undup-${TRAVIS_TAG:-$(git describe)}
- - echo 'const char version[] = "'${TRAVIS_TAG:-$(git describe)}'";' > undup-${TRAVIS_TAG:-$(git describe)}/version.h
- - cat undup-*/version.h
- - tar zcf undup-${TRAVIS_TAG:-$(git describe)}.tar.gz undup-${TRAVIS_TAG:-$(git describe)}
+- echo Standard build checks
+- make GOPTZ=-O1 debug && make GOPTZ=-O1 check
+- echo Build TARBALL
+- make realclean
+- mkdir undup-${TRAVIS_TAG:-$(git describe)}
+- cp -a *.[ch] undup.1 LICENSE Makefile README.md lib regressions scripts undup-${TRAVIS_TAG:-$(git
+  describe)}
+- echo 'const char version[] = "'${TRAVIS_TAG:-$(git describe)}'";' > undup-${TRAVIS_TAG:-$(git
+  describe)}/version.h
+- cat undup-*/version.h
+- tar zcf undup-${TRAVIS_TAG:-$(git describe)}.tar.gz undup-${TRAVIS_TAG:-$(git describe)}
 deploy:
   provider: releases
   api_key:
-    secure: UWPJSGLiL1bFOwsPbIcqwdteptYMKh0kghV0phMtIUyR/VxNF5yWMekwTan6LYP0BUOh7qpIbyJHOEugFwZ+60fSy26CqKl6Yj5OBNQveArgVg41Z2bZhRhCp6bHu3U4ga/7Ot4MsxZv6kS2acCLCHLlso8hNix2dGbXtB2PgoLliSZDS1ptXqeBs/n8AknXxeM90TfzbML68rGVGhYTV6o1LVJV5uuFZtkjBj33qXlHnCnUItEN6FrbVTKhLtW/dIGzzwTnPDD3n/02RCn3YPnreZS9Jx0u+tuoRDGlhgUZcWzYMk4pEOM33NbxIUW6YSkWEJF/+PMqBZiX6dMRLFnkvH91SjRheM/bXv1uA4Aa0D0kKtHPLjmZfvNugqnIiJSQizJOUaLuqXhU2mbS8T1XQI0H5f1d/6OiEnWdrrCgD7L/w7kbLgEcWRcE1RcgMHUMiXCcAHxD6Fjr6vfrIyr8gK2lCcufcJaKoJafq1z77sx2x35b+e/XY5YLGNYFk2uVQa5W7d5y7mNsSwlxl7FtU41offP+MLJOrb78I1YVBA9WcwAqbd27/0qy3pq7/ryJvXsfW+YUJQGMVuTM957RgK5XCQ3CIbjN1hb9NKEErUoITXuYuIaHxAX5Wkbtk2juagMDhIxVyuO/sYLH++Hz8g1n8CSJzYxtc2/QhHk=
+    secure: J8pzUmYgiM4BXsz6wfzUMRTp9LWN8Zkvm576WcM6vRSWvhvT1BRhbjws+pf65NvFPedHG5OpofBQTRQjnf9mBV0liVGhvaFijKuEzgsalcjQfPZjdlzaYgLZng3XMPSTOTH62fYDmH/24tLxKCH0JBi/Y5AZ1yk9WD7tC3ug5PeEeyMSUhFXbnjwH8iCqNYcLiKneHXJq1Y9ImGql4KGZOLrSh5cmE+3JoP3iQAfv5HYVh9J+fjbEDHXnOCSFsJQilMWbbV2u2wzed3z+8YN8PZXtS3fvasWb3jgZ4noOWlN6Z0zDlcCEYILBf8y3w7kRkjkJ9XOrA8lfNLt7cKx+v73+b28cjySWADF/rxJUFrsfr3k7VQOQ/49VXMkGlUDvv5iS69VUEBCU6Q5yP2MzkNCMwM2OwjFkRVfeVmTZu5mJxgpabZZKi61xLqo5DrQRSY7SVTE41auwnDdQyn7ijn0iQymo1B3f9ckdIFRjfGt2ZVhpIPYELInaxrEoo1scYSSNm+z2qPAc96NCIbFpKUQIf6am83W6/hD4sFT5i8uq1ivn+rGOjD7iEpZHyNluMCt/1AIO/HwDh5Qjc2/9Zfmso3hLFEN7i8xQXWKL8vckqPiugjR4r9apXskBckuNwY4vpdgJHaDdiS4aMs4XzBRKFb7qr7286M39yF19lE=
   skip_cleanup: true
   file_glob: true
   file:
    - undup-*.tar.gz
   on:
+    repo: TortugaLabs/undup
     tags: true
