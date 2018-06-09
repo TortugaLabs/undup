@@ -4,12 +4,12 @@ alpine_mirror=http://nl.alpinelinux.org/alpine
 set -eu -o pipefail
 echo Standard build checks
 
-#~ make GOPTZ=-O1 debug && make GOPTZ=-O1 check
-#~ make realclean
-#~ make GOPTZ=-O1 debug && make GOPTZ=-O1 EMBED_GDBM=1 check
+make GOPTZ=-O1 debug && make GOPTZ=-O1 check
+make realclean
+make GOPTZ=-O1 debug && make GOPTZ=-O1 EMBED_GDBM=1 check
+make realclean
 
 echo Build TARBALL
-make realclean
 
 VTAG=${TRAVIS_TAG:-$(git describe)}
 
