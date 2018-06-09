@@ -1,17 +1,7 @@
 language: c
 compiler: gcc
-script:
-- echo Standard build checks
-- make GOPTZ=-O1 debug && make GOPTZ=-O1 check
-- echo Build TARBALL
-- make realclean
-- mkdir undup-${TRAVIS_TAG:-$(git describe)}
-- cp -a *.[ch] undup.1 LICENSE Makefile README.md lib regressions scripts undup-${TRAVIS_TAG:-$(git
-  describe)}
-- echo 'const char version[] = "'${TRAVIS_TAG:-$(git describe)}'";' > undup-${TRAVIS_TAG:-$(git
-  describe)}/version.h
-- cat undup-*/version.h
-- tar zcf undup-${TRAVIS_TAG:-$(git describe)}.tar.gz undup-${TRAVIS_TAG:-$(git describe)}
+sudo: required
+script: scripts/travis-script
 deploy:
   provider: releases
   api_key:
@@ -20,6 +10,8 @@ deploy:
   file_glob: true
   file:
    - undup-*.tar.gz
+   - alpine-v*.apk
   on:
     repo: TortugaLabs/undup
     tags: true
+

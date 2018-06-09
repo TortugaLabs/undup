@@ -25,7 +25,7 @@ CFG_TARGET= # --host=$(TARGET)
 
 EXTLIBDIR = lib
 PEDANTIC=-Wall -Wextra -Werror -std=gnu99 -pedantic
-INCDIRS = -I$(CRYPTO_DIR) -I$(UTHASH_DIR)/src -I$(GDBM_LIBDIR)/src
+INCDIRS = -I$(CRYPTO_DIR) -I$(UTHASH_DIR)/src $(GDBM_INCLUDE)
 
 GOPTZ = -Og
 OPTIMIZ = -g -D_DEBUG $(GOPTZ) # Debug build
@@ -35,10 +35,16 @@ CFLAGS = $(OPTIMIZ) $(PEDANTIC) $(INCDIRS) $(XCFLAGS)
 #-O2 -I$(UTHASH_DIR)/src -I$(GDBM_LIBDIR)/src #-DHASH_TYPE=SHA256
 
 GDBM_VERSION=1.12
+GDBM_UNPACK=[ -n "$(GDBM_DEP)" ] && ([ -d $(GDBM_LIBDIR) ] || ( cd $(EXTLIBDIR) && tar zxf gdbm-$(GDBM_VERSION).tar.gz )) || :
 GDBM_LIBDIR=$(EXTLIBDIR)/gdbm-$(GDBM_VERSION)
-GDBM_UNPACK=[ -d $(GDBM_LIBDIR) ] || ( cd $(EXTLIBDIR) && tar zxf gdbm-$(GDBM_VERSION).tar.gz )
+
+ifdef EMBED_GDBM
+GDBM_INCLUDE=-Ilib/gdbm-$(GDBM_VERSION)/src
 GDBM_DEP=$(GDBM_LIBDIR)/libgdbm.a
-GDBM_REF=$(GDBM_LIBDIR)/libgdbm.a
+GDBM_LIBREF=$(GDBM_DEP)
+else
+GDBM_LIBREF=-lgdbm
+endif
 
 UTHASH_DIR = $(EXTLIBDIR)/uthash
 CRYPTO_DIR = $(EXTLIBDIR)/crypto-algorithms
@@ -114,10 +120,10 @@ _check: test cu-check-regressions
 test: test.c $(OBJS) $(TESTS) $(GDBM_DEP)
 	./scripts/gentests -o cu-t.h $(TESTS)
 	$(CC) $(CFLAGS) $(CU_CFLAGS) -o test \
-		test.c $(OBJS) $(TESTS) $(GDBM_REF)
+		test.c $(OBJS) $(TESTS) $(GDBM_LIBREF)
 
 undup: vcheck $(OBJS) main.o $(GDBM_DEP)
-	$(LD) $(LDFLAGS) $(CFLAGS) -o undup main.o $(OBJS) $(GDBM_REF)
+	$(LD) $(LDFLAGS) $(CFLAGS) -o undup main.o $(OBJS) $(GDBM_LIBREF)
 
 vcheck:
 	: VCHECK
@@ -143,7 +149,7 @@ vcheck:
 	$(CC) -c $(CFLAGS) $*.c -o $*.o
 	$(CC) -MM $(CFLAGS) $*.c > $*.d
 
-$(GDBM_LIBDIR)/libgdbm.a:
+lib/gdbm-$(GDBM_VERSION)/libgdbm.a:
 	$(GDBM_UNPACK)
 	cd $(GDBM_LIBDIR) && ./configure $(CFG_TARGET) && make 
 	cd $(GDBM_LIBDIR) && $(AR) cr libgdbm.a src/*.o
