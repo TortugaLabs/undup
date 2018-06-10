@@ -36,6 +36,9 @@
 #define false 0
 #endif
 
+#define UNUSED(x) ((void)(x))
+
+
 #ifdef _DEBUG
 #define trace(f,l) fprintf(stderr,"\"%s\",%d: ",f,l)
 #define ckptm(...) do {						\

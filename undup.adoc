@@ -1,6 +1,6 @@
 = UNDUP(1)
 :doctype:	manpage
-:Date:	2016-06-20
+:Date:	2018-06-10
 :man manual:	User commands
 :man source:	undup.c
 :Author: A Liu Ly
@@ -22,32 +22,38 @@ repeated files with hardlinks.
 
 == OPTIONS
 
-*-c* catalogue::
-   create a file catalogue
-*-l* lockfile::
-   create an exclusive lock (to avoid overruning)
-*-C*::
-   disables hash caching
-*-e*::
-   creates hardlinks (disables the default, dry-run mode)
-*-m*::
-   Shows memory statistics
-*-K*::
-   Shows caching stats
-*-s*::
-   only scans the file system
 *-5*::
    use MD5 for hashes
-*-S*::
-   use SHA256 for hashes
-*-q*::
-   quiet mode
-*-v*::
-   verbose mode
-*-V*::
-   show version info
+*-C*::
+   disables hash caching
+*-c* catalogue::
+   create a file catalogue
+*-e*::
+   creates hardlinks (disables the default, dry-run mode)
 *-h*::
    show help information
+*-I* pattern::
+   Add an include pattern.  (Start with "/" for a full path
+   match.  End with "/" to match directories only)
+*-K*::
+   Shows caching stats
+*-l* lockfile::
+   create an exclusive lock (to avoid overruning)
+*-m*::
+   Shows memory statistics
+*-q*::
+   quiet mode
+*-S*::
+   use SHA256 for hashes
+*-s*::
+   only scans the file system
+*-V*::
+   show version info
+*-v*::
+   verbose mode
+*-I* pattern::
+   Add an exclude pattern.  (Start with "/" for a full path
+   match.  End with "/" to match directories only)
 
 == HEURISTICS
 

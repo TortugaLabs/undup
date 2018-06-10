@@ -55,20 +55,21 @@ To get a help page:
 ```
 [alex@pc3 undup]$ ./undup -h
 Usage: ./undup [options] dir
-	-c catalogue: create a file catalogue
-	-l lockfile: create a exclusive lock
+	-5: use MD5 hashes (default)
 	-C: disable hash caching
+	-c catalogue: create a file catalogue
 	-e: execute (disables dry-run mode)
-	-m: shows memory stats
-	-K: shows cache stats
-	-s: scan only
-	-5: use MD5 hashes
-	-S: use SHA256 hashes
-	-q: supress additional info
-	-v: show additional info
-	-V: version info
 	-h|?: this help message
-
+	-I pattern: include pattern
+	-K: shows cache stats
+	-l lockfile: create a exclusive lock
+	-m: shows memory stats
+	-q: supress additional info
+	-S: use SHA256 hashes
+	-s: scan only
+	-V: version info
+	-v: show additional info
+	-X pattern: exclude pattern
 ```
 
 Scan file system:
@@ -170,6 +171,10 @@ find the build status page
 
 ## Changes
 
+- implement excludes-t
+
+* 2.2.0: WIP
+  -
 * 2.1.1:
   - Fixing tests
   - Updating libraries
@@ -194,7 +199,7 @@ find the build status page
 
 
     undup
-    Copyright (C) 2015, Alejandro Liu
+    Copyright (C) 2015, 2018 Alejandro Liu
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

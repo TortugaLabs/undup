@@ -29,11 +29,11 @@
 #include "fscanner.h"
 #include <unistd.h>
 #include "human_readable.h"
+#include "exclude.h"
 
 #ifdef __malloc_ptr_t
 #define MSTATS	1
 #endif
-
 
 struct undup_opts gopts;
 
@@ -55,8 +55,12 @@ static const char *filetype(int mode) {
   return "???";
 }
 
-static void catcb(char *dir, char *file,struct stat *stdat,void *ext) {
-  FILE *fp = (FILE *)ext;
+struct fscncb_t {
+  FILE *catfp;
+  struct excludes_t *excludes;
+};
+
+static int catcb1(char *dir, char *file,struct stat *stdat,FILE *fp) {
   fprintf(fp, "%d %s %03o n:%d u:%d g:%d s:%llu b:%d ts:%d %s%s%s\n",
 	  (int)stdat->st_ino, filetype(stdat->st_mode),
 	  stdat->st_mode & ~S_IFMT,
@@ -64,6 +68,12 @@ static void catcb(char *dir, char *file,struct stat *stdat,void *ext) {
 	  (unsigned long long)stdat->st_size, (int)stdat->st_blocks,
 	  (int)stdat->st_mtime,
 	  dir, dir[0] ? "/" : "", file);
+  return 0;
+}
+#define catcb2 excludes_check
+static int catcb3(char *dir, char *file,struct stat *stdat,void *ext) {
+  catcb1(dir,file,stdat,((struct fscncb_t *)ext)->catfp);
+  return excludes_check(dir,file,stdat,((struct fscncb_t *)ext)->excludes);
 }
 
 /* Sorts inodes so oldest is first */
@@ -139,11 +149,13 @@ static void show_version() {
 int undup_main(int argc,char **argv) {
   char *root;
   FILE *catfp = NULL;
-  int opt;
-  struct cat_cb cb = { .callback = catcb, .ext = NULL }, *cbp = NULL;
+  int opt, ex_flags, ln;
+  struct cat_cb cb, *cbp;
   struct fs_dat fs;
   struct dedup_stats stats;
   struct dedup_cb dpcb = { .do_dedup = do_dedup, .ext = &stats };
+  struct excludes_t *excludes = NULL;
+  struct fscncb_t  fscncb_dat;
 
 #ifdef _DEBUG
   mtrace();
@@ -154,18 +166,12 @@ int undup_main(int argc,char **argv) {
   gopts.verbose = 1;
   hash_set(CH_HASH_TYPE);
 
-  while ((opt = getopt(argc,argv,"h?Vqv5SemCKsc:l:")) != -1) {
+  while ((opt = getopt(argc,argv,"h?Vqv5SemCKsc:l:I:X:")) != -1) {
     switch (opt) {
     case 'c':
       if (catfp) fclose(catfp);
       catfp = fopen(optarg,"w");
-      if (catfp) {
-	cb.ext = (void *)catfp;
-	cbp = &cb;
-      } else {
-	perror(optarg);
-	cbp = NULL;
-      }
+      if (!catfp) perror(optarg);
       break;
     case 'l':
       lockfile(optarg);
@@ -199,6 +205,20 @@ int undup_main(int argc,char **argv) {
     case 'q':
       gopts.verbose = 0;
       break;
+    case 'I':
+    case 'X':
+      ex_flags = opt == 'I' ? EXCLUDES_INCLUDE : EXCLUDES_EXCLUDE;
+      if (*optarg == '/') {
+	optarg++;
+	ex_flags |= EXCLUDES_FULLPATH;
+      }
+      ln = strlen(optarg);
+      if (ln && optarg[ln-1] == '/') {
+	optarg[ln-1] = '\0';
+	ex_flags |= EXCLUDES_MATCHDIR;
+      }
+      excludes = excludes_add(excludes, optarg, ex_flags);
+      break;
     case 'V':
       show_version();
     case 'h':
@@ -209,7 +229,6 @@ int undup_main(int argc,char **argv) {
 #else
       gopts.mstats = false;
 #endif
-
       //++
       // = UNDUP(1)
       // :Author: A Liu Ly
@@ -232,45 +251,53 @@ int undup_main(int argc,char **argv) {
       //
       // == OPTIONS
       //
-      fputs("\t-c catalogue: create a file catalogue\n",stderr);
-      // *-c* catalogue::
-      //    create a file catalogue
-      fputs("\t-l lockfile: create a exclusive lock\n",stderr);
-      // *-l* lockfile::
-      //    create an exclusive lock (to avoid overruning)
-      fputs("\t-C: disable hash caching\n",stderr);
-      // *-C*::
-      //    disables hash caching
-      fputs("\t-e: execute (disables dry-run mode)\n",stderr);
-      // *-e*::
-      //    creates hardlinks (disables the default, dry-run mode)
-      if (gopts.mstats) fputs("\t-m: shows memory stats\n",stderr);
-      // *-m*::
-      //    Shows memory statistics
-      fputs("\t-K: shows cache stats\n",stderr);
-      // *-K*::
-      //    Shows caching stats
-      fputs("\t-s: scan only\n",stderr);
-      // *-s*::
-      //    only scans the file system
       fputs("\t-5: use MD5 hashes (default)\n",stderr);
       // *-5*::
       //    use MD5 for hashes
-      fputs("\t-S: use SHA256 hashes\n",stderr);
-      // *-S*::
-      //    use SHA256 for hashes
-      fputs("\t-q: supress additional info\n",stderr);
-      // *-q*::
-      //    quiet mode
-      fputs("\t-v: show additional info\n",stderr);
-      // *-v*::
-      //    verbose mode
-      fputs("\t-V: version info\n",stderr);
-      // *-V*::
-      //    show version info
+      fputs("\t-C: disable hash caching\n",stderr);
+      // *-C*::
+      //    disables hash caching
+      fputs("\t-c catalogue: create a file catalogue\n",stderr);
+      // *-c* catalogue::
+      //    create a file catalogue
+      fputs("\t-e: execute (disables dry-run mode)\n",stderr);
+      // *-e*::
+      //    creates hardlinks (disables the default, dry-run mode)
       fputs("\t-h|?: this help message\n",stderr);
       // *-h*::
       //    show help information
+      fputs("\t-I pattern: include pattern\n",stderr);
+      // *-I* pattern::
+      //    Add an include pattern.  (Start with "/" for a full path
+      //    match.  End with "/" to match directories only)
+      fputs("\t-K: shows cache stats\n",stderr);
+      // *-K*::
+      //    Shows caching stats
+      fputs("\t-l lockfile: create a exclusive lock\n",stderr);
+      // *-l* lockfile::
+      //    create an exclusive lock (to avoid overruning)
+      if (gopts.mstats) fputs("\t-m: shows memory stats\n",stderr);
+      // *-m*::
+      //    Shows memory statistics
+      fputs("\t-q: supress additional info\n",stderr);
+      // *-q*::
+      //    quiet mode
+      fputs("\t-S: use SHA256 hashes\n",stderr);
+      // *-S*::
+      //    use SHA256 for hashes
+      fputs("\t-s: scan only\n",stderr);
+      // *-s*::
+      //    only scans the file system
+      fputs("\t-V: version info\n",stderr);
+      // *-V*::
+      //    show version info
+      fputs("\t-v: show additional info\n",stderr);
+      // *-v*::
+      //    verbose mode
+      fputs("\t-X pattern: exclude pattern\n",stderr);
+      // *-I* pattern::
+      //    Add an exclude pattern.  (Start with "/" for a full path
+      //    match.  End with "/" to match directories only)
       //
       // == HEURISTICS
       //
@@ -313,7 +340,25 @@ int undup_main(int argc,char **argv) {
   vmsg("Scanning %s\n", root);
 
   fscanner_init(&fs, root, gopts.usecache);
+  if (catfp && excludes) {
+    cbp = &cb;
+    cb.callback = catcb3;
+    cb.ext = &fscncb_dat;
+    fscncb_dat.catfp = catfp;
+    fscncb_dat.excludes = excludes;
+  } else if (excludes) {
+    cbp = &cb;
+    cb.callback = (cat_cb_fn_t)&catcb2;
+    cb.ext = (void *)excludes;
+  } else if (catfp) {
+    cbp = &cb;
+    cb.callback = (cat_cb_fn_t)&catcb1;
+    cb.ext = (void *)catfp;
+  } else {
+    cbp = NULL;
+  }
   fscanner(&fs, cbp);
+  excludes_free(excludes);
   if (catfp) fclose(catfp);
   vmsg("Files found: %d\n", inodetab_count(fs.itab));
   struct duptab *clusters = dedup_cluster(fs.dtab);
