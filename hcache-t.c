@@ -19,7 +19,7 @@ static struct stat *mkstat(struct stat *stp,ino_t ino,uid_t uid,gid_t gid,off_t 
 
 TEST(hcache_checked) {
   char fn[] = "lckXXXXXX", *cf;
-  assertTrue(mktemp(fn));
+  assertTrue(mkstemp(fn));
   unlink(fn);
   struct hcache *cache;
 
