@@ -137,23 +137,10 @@ This software makes use of the following libraries:
   and SHA-1.  Public domain.
 * [GDBM](http://www.gnu.org.ua/software/gdbm/) - library of
   database functions to create and manipulate a hashed database.
-  Licensed as GPLv3.
+  Licensed as GPLv3.  The system gdbm library will be used unless
+  EMBED_GDBM=1 is used during build.  This is the default for `XBUILD`.
 * human_readable.c from [busybox](http://www.busybox.net/) - GPLv2
   Licensed.
-
-## Issues
-
-- duptable : implement a gdbm version and as you start loading check
-  memory use and switch implementations.
-- inodetab : implement a gdbm version and as you start loading check
-  memory use and switch implementations.
-- hcache
-  - when validate, validate all hash types
-  - write a in-memory version.
-  - convert between two implementations
-  - interface
-- Add more hashes from [sha](http://www.saddi.com/software/sha/).
-- MD2 and SHA1 are implemented but can not be selected.
 
 ## Alternatives
 
@@ -171,10 +158,9 @@ find the build status page
 
 ## Changes
 
-- implement excludes-t
-
 * 2.2.0: WIP
-  -
+  - Added excludes/includes options
+  - minor test changes
 * 2.1.1:
   - Fixing tests
   - Updating libraries
