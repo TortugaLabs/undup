@@ -159,7 +159,7 @@ find the build status page
 
 ## Changes
 
-* 2.2.0: WIP
+* 2.2.0:
   - Added excludes/includes options
   - Added option -H to select all hashes
 * 2.1.1:
