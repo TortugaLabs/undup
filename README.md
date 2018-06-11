@@ -59,6 +59,7 @@ Usage: ./undup [options] dir
 	-C: disable hash caching
 	-c catalogue: create a file catalogue
 	-e: execute (disables dry-run mode)
+	-H algo : Select hash algo
 	-h|?: this help message
 	-I pattern: include pattern
 	-K: shows cache stats
@@ -95,7 +96,7 @@ Size clusters found: 5025
 De-duplicate a file system, using SHA256 checksums and showing cache stats:
 
 ```
-[alex@pc3 undup]$ ./undup -K -S ./data/test1
+[alex@pc3 undup]$ ./undup -e -K -S ./data/test1
 Using hash: sha256
 Scanning ./data/test1
 Files found: 21675
@@ -160,7 +161,7 @@ find the build status page
 
 * 2.2.0: WIP
   - Added excludes/includes options
-  - minor test changes
+  - Added option -H to select all hashes
 * 2.1.1:
   - Fixing tests
   - Updating libraries

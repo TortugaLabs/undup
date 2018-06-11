@@ -252,6 +252,10 @@ int undup_main(int argc,char **argv) {
       // for file duplicates.  When found, it saves diskspace by replacing
       // repeated files with hardlinks.
       //
+      // By default *NO CHANGES* are made on the filesystem, and only
+      // shows what would happen.  To execute changes you need to use
+      // option *-e* (execute).
+      //
       // == OPTIONS
       //
       fputs("\t-5: use MD5 hashes (default)\n",stderr);
