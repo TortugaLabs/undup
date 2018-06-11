@@ -21,6 +21,30 @@
 #include <unistd.h>
 #include <stdio.h>
 
+/*
+ * Validating means we run through the filesystem and make sure
+ * that hashes are still valid. i.e. an i-node still exists and it
+ * has not been modified.
+ *
+ * This is automatic in a sense that if we open an "hcd", it will
+ * not start validating, but will only do so on the first call to
+ * validate.  If validate is not called, then we don't kick it off.
+ * 
+ * The first read (get) will stop the validation and make the validated
+ * data active.
+ * 
+ * This means that on normal undup operation, we do the validation
+ * and hashes are expired, before we start checking duplicates.
+ * 
+ * If we were only to look at the hcache file, this code will simply
+ * open the "hcd" file, and (if no validation is called), you can
+ * simply read the keys directly.
+ * 
+ */
+#define HCM_READING	1
+#define HCM_VALIDATING	2
+#define HCM_RDWR	3
+
 struct hcache {
   GDBM_FILE dbf;
   GDBM_FILE validated;
@@ -29,6 +53,7 @@ struct hcache {
   int hlen;
   int hits;
   int misses;
+  int state;
 };
 
 struct hcache_key {
@@ -54,7 +79,7 @@ static datum _hcache_genkey(struct hcache *cache,struct stat *st) {
   sk->mtime = st->st_mtime;
   sk->cktype = cache->type;
   key.dptr = (char *)sk;
-  //ckptm("i:%llx m:%03o s:%lld %lld %c\n",(long long)sk->inode,sk->mode,(long long)sk->size,(long long)sk->mtime, sk->cktype);
+  //~ ckptm("i:%llx m:%03o s:%lld %lld %c\n",(long long)sk->inode,sk->mode,(long long)sk->size,(long long)sk->mtime, sk->cktype);
   return key;
 }
 
@@ -63,7 +88,6 @@ const char *hcache_getpath(struct hcache *cache) {
 }
 
 void hcache_stats(struct hcache *cache,int *hits, int *misses){
-  //ckpt();
   if(hits) *hits = cache->hits;
   if(misses) *misses = cache->misses;
 }
@@ -77,27 +101,37 @@ struct hcache *hcache_new(const char *base,int type,int len) {
   cache->dbf = gdbm_open(cachefile,0,GDBM_READER,0666,NULL);
   cache->type = type;
   cache->hlen = len;
+  cache->state = HCM_READING;
+  //~ ckpt();
   return cache;
 }
 
-static void _hcache_validate_done(struct hcache *cache) {
+static void _hcache_validate_done(struct hcache *cache,int iswr) {
   char *vfname;
-  if (!cache->validated) return;
-  gdbm_close(cache->validated);
-  vfname = mystrcat(cache->path,".validate");
-  if (cache->dbf) {
-    gdbm_close(cache->dbf);
-    unlink(cache->path);
+  
+  if (!cache->validated) {
+    //~ ckptm("IsWR=%s state=%d\n",iswr ? "TRUE" : "FALSE", cache->state);
+    if (!iswr && cache->state == HCM_RDWR) return;
+    if (cache->dbf) gdbm_close(cache->dbf);
+  } else {
+    gdbm_close(cache->validated);
+    vfname = mystrcat(cache->path,".validate");
+    if (cache->dbf) {
+      gdbm_close(cache->dbf);
+      unlink(cache->path);
+    }
+    if (rename(vfname,cache->path) == -1)
+      errormsg("rename(%s->%s)",vfname, cache->path);
+    free(vfname);
+    cache->validated = NULL;
   }
-  if (rename(vfname,cache->path) == -1)
-    errormsg("rename(%s->%s)",vfname, cache->path);
-  free(vfname);
-  cache->validated = NULL;
-  cache->dbf = gdbm_open(cache->path,0, GDBM_WRITER, 0666,NULL);
+  cache->dbf = gdbm_open(cache->path,0, GDBM_WRCREAT, 0666,NULL);
+  cache->state = HCM_RDWR;
 }
 static void _hcache_validate_init(struct hcache *cache) {
   char *vfname;
   if (cache->validated) return;
+  cache->state = HCM_VALIDATING;
   vfname = mystrcat(cache->path,".validate");
   cache->validated = gdbm_open(vfname,0, GDBM_NEWDB, 0666,NULL);
   if (!cache->validated)
@@ -106,7 +140,7 @@ static void _hcache_validate_init(struct hcache *cache) {
 }
 
 struct hcache *hcache_free(struct hcache *cache) {
-  _hcache_validate_done(cache);
+  _hcache_validate_done(cache,false);
   if (cache->dbf) gdbm_close(cache->dbf);
   free(cache->path);
   free(cache);
@@ -114,47 +148,38 @@ struct hcache *hcache_free(struct hcache *cache) {
 }
 void hcache_validate(struct hcache *cache, struct stat *st) {
   datum key, datum;
-  //ckpt(0);
   _hcache_validate_init(cache);
   if (!cache->dbf) return;
-  //ckpt(0);
   key = _hcache_genkey(cache,st);
-  //ckpt(0);
   datum = gdbm_fetch(cache->dbf, key);
-  //ckpt(0);
   if (datum.dptr == NULL) {
     free(key.dptr);
     return;
   }
   if (gdbm_store(cache->validated, key, datum, GDBM_INSERT) == -1)
     fatal(gdbm_errno,"gdbm_store %s", gdbm_strerror(gdbm_errno));
-  //ckpt(0);
   free(datum.dptr);
   free(key.dptr);
 }
 void hcache_put(struct hcache *cache, struct stat *st,char *hash) {
   datum key, datum;
-  //ckpt();
-  _hcache_validate_done(cache);
+  _hcache_validate_done(cache,true);
   key = _hcache_genkey(cache,st);
-  //ckptm(">>");
   //printhex(stderr,key.dptr,key.dsize,0);
-  //ckptm("\n");
 
   datum.dptr = hash;
   datum.dsize = cache->hlen;
-  //ckpt();
-  //ckptm("hash=%s, len=%d\n",hash,cache->hlen);
+  //~ ckptm("hash=%s, len=%d (%llx)\n",hash,cache->hlen,((unsigned long long)cache->dbf));
   if (gdbm_store(cache->dbf,key,datum,GDBM_REPLACE) == -1)
     fatal(gdbm_errno,"gdbm_store %s", gdbm_strerror(gdbm_errno));
-  //ckpt();
   free(key.dptr);
-  //ckpt();
 }
 
 int hcache_get(struct hcache *cache, struct stat *st,char **hash) {
   datum key, datum;
-  _hcache_validate_done(cache);
+  
+  if (cache->dbf == NULL) return false;
+  _hcache_validate_done(cache,false);
   key = _hcache_genkey(cache,st);
   datum = gdbm_fetch(cache->dbf, key);
   free(key.dptr);
@@ -170,7 +195,7 @@ int hcache_get(struct hcache *cache, struct stat *st,char **hash) {
 
 void hcache_del(struct hcache *cache, struct stat *st) {
   datum key;
-  _hcache_validate_done(cache);
+  _hcache_validate_done(cache,true);
   key = _hcache_genkey(cache,st);
   gdbm_delete(cache->dbf,key);
   free(key.dptr);

@@ -160,6 +160,6 @@ int main(int argc, char **argv) {
   CU_RUN(argc, argv);
 
   muntrace();
-  if (cu_fail_tests) exit(1);
+  if (cu_fail_tests || cu_fail_test_suites) exit(1);
   return 0;
 }
