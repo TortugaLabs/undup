@@ -1,6 +1,6 @@
 = UNDUP(1)
 :doctype:	manpage
-:Date:	2018-06-10
+:Date:	2018-06-11
 :man manual:	User commands
 :man source:	undup.c
 :Author: A Liu Ly
@@ -30,6 +30,8 @@ repeated files with hardlinks.
    create a file catalogue
 *-e*::
    creates hardlinks (disables the default, dry-run mode)
+*-H* algo::
+   Sets the hash algo to *algo*.
 *-h*::
    show help information
 *-I* pattern::
@@ -77,6 +79,13 @@ The reason is that *undup(1)* is intended to be use for *live*
 filesytems.  In that situation, we want to preserver permissions
 and file ownerships accross deduplicated i-nodes.
 
-*undup(1)* uses MD5 for the checksum by default, but it has the
-option to use SHA256 checksums.
+== HASHES
+
+*undup(1)* uses MD5 for the checksum by default.  The following
+hashes are available (with the -H option):
+
+* md5 (Option -5)
+* md2
+* sha1
+* sha256 (Option -S)
 

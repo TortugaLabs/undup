@@ -166,7 +166,7 @@ int undup_main(int argc,char **argv) {
   gopts.verbose = 1;
   hash_set(CH_HASH_TYPE);
 
-  while ((opt = getopt(argc,argv,"h?Vqv5SemCKsc:l:I:X:")) != -1) {
+  while ((opt = getopt(argc,argv,"h?Vqv5SemCKsc:l:I:X:H:")) != -1) {
     switch (opt) {
     case 'c':
       if (catfp) fclose(catfp);
@@ -190,6 +190,9 @@ int undup_main(int argc,char **argv) {
       gopts.mstats = true;
       break;
 #endif
+    case 'H':
+      hash_set_by_name(optarg);
+      break;
     case '5':
       hash_set(CH_MD5);
       break;
@@ -263,6 +266,9 @@ int undup_main(int argc,char **argv) {
       fputs("\t-e: execute (disables dry-run mode)\n",stderr);
       // *-e*::
       //    creates hardlinks (disables the default, dry-run mode)
+      fputs("\t-H algo: select a hash algo\n",stderr);
+      // *-H* algo::
+      //    Sets the hash algo to *algo*.
       fputs("\t-h|?: this help message\n",stderr);
       // *-h*::
       //    show help information
@@ -321,8 +327,15 @@ int undup_main(int argc,char **argv) {
       // filesytems.  In that situation, we want to preserver permissions
       // and file ownerships accross deduplicated i-nodes.
       //
-      // *undup(1)* uses MD5 for the checksum by default, but it has the
-      // option to use SHA256 checksums.
+      // == HASHES
+      //
+      // *undup(1)* uses MD5 for the checksum by default.  The following
+      // hashes are available (with the -H option):
+      //
+      // * md5 (Option -5)
+      // * md2
+      // * sha1
+      // * sha256 (Option -S)
       //--
       exit(EXIT_FAILURE);
     }

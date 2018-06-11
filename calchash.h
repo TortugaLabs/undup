@@ -46,5 +46,6 @@ extern struct IHash calchash;
 #define hash_free(ctx,h) calchash.hash_free_fn(ctx,h)
 char *hash_file(const char *file);
 void hash_set(int type);
+void hash_set_by_name(const char *name);
 
 #endif
