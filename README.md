@@ -55,20 +55,22 @@ To get a help page:
 ```
 [alex@pc3 undup]$ ./undup -h
 Usage: ./undup [options] dir
-	-c catalogue: create a file catalogue
-	-l lockfile: create a exclusive lock
+	-5: use MD5 hashes (default)
 	-C: disable hash caching
+	-c catalogue: create a file catalogue
 	-e: execute (disables dry-run mode)
-	-m: shows memory stats
-	-K: shows cache stats
-	-s: scan only
-	-5: use MD5 hashes
-	-S: use SHA256 hashes
-	-q: supress additional info
-	-v: show additional info
-	-V: version info
+	-H algo : Select hash algo
 	-h|?: this help message
-
+	-I pattern: include pattern
+	-K: shows cache stats
+	-l lockfile: create a exclusive lock
+	-m: shows memory stats
+	-q: supress additional info
+	-S: use SHA256 hashes
+	-s: scan only
+	-V: version info
+	-v: show additional info
+	-X pattern: exclude pattern
 ```
 
 Scan file system:
@@ -94,7 +96,7 @@ Size clusters found: 5025
 De-duplicate a file system, using SHA256 checksums and showing cache stats:
 
 ```
-[alex@pc3 undup]$ ./undup -K -S ./data/test1
+[alex@pc3 undup]$ ./undup -e -K -S ./data/test1
 Using hash: sha256
 Scanning ./data/test1
 Files found: 21675
@@ -136,23 +138,10 @@ This software makes use of the following libraries:
   and SHA-1.  Public domain.
 * [GDBM](http://www.gnu.org.ua/software/gdbm/) - library of
   database functions to create and manipulate a hashed database.
-  Licensed as GPLv3.
+  Licensed as GPLv3.  The system gdbm library will be used unless
+  EMBED_GDBM=1 is used during build.  This is the default for `XBUILD`.
 * human_readable.c from [busybox](http://www.busybox.net/) - GPLv2
   Licensed.
-
-## Issues
-
-- duptable : implement a gdbm version and as you start loading check
-  memory use and switch implementations.
-- inodetab : implement a gdbm version and as you start loading check
-  memory use and switch implementations.
-- hcache
-  - when validate, validate all hash types
-  - write a in-memory version.
-  - convert between two implementations
-  - interface
-- Add more hashes from [sha](http://www.saddi.com/software/sha/).
-- MD2 and SHA1 are implemented but can not be selected.
 
 ## Alternatives
 
@@ -170,6 +159,9 @@ find the build status page
 
 ## Changes
 
+* 2.2.0: WIP
+  - Added excludes/includes options
+  - Added option -H to select all hashes
 * 2.1.1:
   - Fixing tests
   - Updating libraries
@@ -194,7 +186,7 @@ find the build status page
 
 
     undup
-    Copyright (C) 2015, Alejandro Liu
+    Copyright (C) 2015, 2018 Alejandro Liu
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

@@ -76,8 +76,10 @@ void fscanner(struct fs_dat *dat, struct cat_cb *cb) {
       if (lstat(fpath,&stbuf) == -1) errormsg("lstat(%s)",fpath);
       free(fpath);
 
-      // Catalogue line
-      if (cb) cb->callback(cdir, dp->d_name, &stbuf, cb->ext);
+      // Catalogue and check exclusion table...
+      if (cb) {
+	if (cb->callback(cdir, dp->d_name, &stbuf, cb->ext)) continue;
+      }
       //ckpt(0);
       if (!S_ISLNK(stbuf.st_mode)) {
 	if (S_ISDIR(stbuf.st_mode) && stbuf.st_dev == rootdev) {

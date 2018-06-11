@@ -41,13 +41,14 @@ struct cb_data {
 };
   
 
-static void cb(char *dir, char *file,struct stat *stdat,void *ext) {
+static int cb(char *dir, char *file,struct stat *stdat,void *ext) {
   struct cb_data *cbdata = (struct cb_data *)ext;
   int id = ++(cbdata->cid), k;
   struct fsout *ln = (struct fsout *)mymalloc(sizeof(struct fsout)+( k = strlen(dir)+strlen(file)+128));
   ln->id = id;
   snprintf(ln->text,k, "%s - %s %d %d", dir, file, stdat == NULL, ext == NULL);
   HASH_ADD_INT(cbdata->lines,id, ln);
+  return 0;
 }
 
 static int line_sort(struct fsout *a,struct fsout *b) {

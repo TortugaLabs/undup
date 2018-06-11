@@ -1,6 +1,6 @@
 /*
  *    This file is part of undup
- *    Copyright (C) 2015, Alejandro Liu
+ *    Copyright (C) 2018, Alejandro Liu
  *
  *    undup is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -15,31 +15,24 @@
  *    You should have received a copy of the GNU General Public License along
  *    with this program; if not, see <http://www.gnu.org/licenses>
  */
-#ifndef _FSCANNER_H
-#define _FSCANNER_H
-#include "inodetab.h"
-#include "duptable.h"
-#include "hcache.h"
+#ifndef _EXCLUDE_H
+#define _EXCLUDE_H
 #include <sys/types.h>
 #include <sys/stat.h>
 
-struct fs_dat {
-  struct inodetab *itab;
-  struct duptab *dtab;
-  struct hcache *cache;
-  char *root;
+#define EXCLUDES_EXCLUDE	(1<<0)
+#define EXCLUDES_INCLUDE	(1<<1)
+#define EXCLUDES_FULLPATH	(1<<2)
+#define EXCLUDES_FNMATCH	(1<<3)
+#define EXCLUDES_MATCHDIR	(1<<4)
+
+struct excludes_t {
+  char *pattern;
+  int flags;
+  struct excludes_t *prev, *next;
 };
 
-typedef int (*cat_cb_fn_t)(char *dir,char *file, struct stat *stdat,void *ext);
-
-struct cat_cb {
-  cat_cb_fn_t callback;
-  void *ext;
-};
-
-void fscanner_init(struct fs_dat *fs,char *root,int usecache);
-void fscanner(struct fs_dat *dat, struct cat_cb *cb);
-void fscanner_close(struct fs_dat *scandat);
-
-
+struct excludes_t *excludes_add(struct excludes_t *tab, char *inp, int flags);
+void excludes_free(struct excludes_t *tab);
+int excludes_check(char *dir, char *file,struct stat *stdat,struct excludes_t *tab);
 #endif

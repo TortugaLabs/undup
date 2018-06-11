@@ -103,6 +103,19 @@ void hash_set(int type) {
   }
 }
 
+void hash_set_by_name(const char *name) {
+  if (!strcasecmp(name,"md5")) {
+    md5_hash_init(&calchash);
+  } else if (!strcasecmp(name, "md2")) {
+    md2_hash_init(&calchash);
+  } else if (!strcasecmp(name, "sha1")) {
+    sha1_hash_init(&calchash);
+  } else if (!strcasecmp(name, "sha256")) {
+    sha256_hash_init(&calchash);
+  } else {
+    fatal(EINVAL,"Invalid hash name \"%s\"\n", name);
+  }
+}
 //////////////////////////////////////////////////////////////////////
 #define _HASH_BUFSZ 4096
 
