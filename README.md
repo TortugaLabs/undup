@@ -159,6 +159,9 @@ find the build status page
 
 ## Changes
 
+* 2.2.1: Maintenance release
+  - Code clean-ups
+  - Updating `alpine linux` release to v3.8.
 * 2.2.0:
   - Added excludes/includes options
   - Added option -H to select all hashes

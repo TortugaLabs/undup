@@ -48,6 +48,7 @@ build_alpine() {
 
   case "$release" in
     3.7)  version=2.9.1-r2 ;;
+    3.8)  version=2.10.0-r0 ;;
     *) echo "Unsupported release: $release"; exit 1 ;;
   esac
   
@@ -113,5 +114,7 @@ build_alpine() {
 #~ mkdir -p ${chrootdir}/root
 #~ /sbin/chroot ${chrootdir} /bin/sh
 
+build_alpine 3.8
 build_alpine 3.7
+
 

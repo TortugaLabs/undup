@@ -2,12 +2,12 @@
 .\"     Title: undup
 .\"    Author: A Liu Ly
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 2016-06-20
+.\"      Date: 2018-06-11
 .\"    Manual: User commands
 .\"    Source: undup.c 2.0
 .\"  Language: English
 .\"
-.TH "UNDUP" "1" "2016\-06\-20" "undup\&.c 2\&.0" "User commands"
+.TH "UNDUP" "1" "2018\-06\-11" "undup\&.c 2\&.0" "User commands"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -35,16 +35,13 @@ undup \- tracks duplicate files and merges them with hardlinks
 .SH "DESCRIPTION"
 .sp
 \fBundup(1)\fR examines the contents of a filesystem (directory) searching for file duplicates\&. When found, it saves diskspace by replacing repeated files with hardlinks\&.
+.sp
+By default \fBNO CHANGES\fR are made on the filesystem, and only shows what would happen\&. To execute changes you need to use option \fB\-e\fR (execute)\&.
 .SH "OPTIONS"
 .PP
-\fB\-c\fR catalogue
+\fB\-5\fR
 .RS 4
-create a file catalogue
-.RE
-.PP
-\fB\-l\fR lockfile
-.RS 4
-create an exclusive lock (to avoid overruning)
+use MD5 for hashes
 .RE
 .PP
 \fB\-C\fR
@@ -52,14 +49,30 @@ create an exclusive lock (to avoid overruning)
 disables hash caching
 .RE
 .PP
+\fB\-c\fR catalogue
+.RS 4
+create a file catalogue
+.RE
+.PP
 \fB\-e\fR
 .RS 4
 creates hardlinks (disables the default, dry\-run mode)
 .RE
 .PP
-\fB\-m\fR
+\fB\-H\fR algo
 .RS 4
-Shows memory statistics
+Sets the hash algo to
+\fBalgo\fR\&.
+.RE
+.PP
+\fB\-h\fR
+.RS 4
+show help information
+.RE
+.PP
+\fB\-I\fR pattern
+.RS 4
+Add an include pattern\&. (Start with "/" for a full path match\&. End with "/" to match directories only)
 .RE
 .PP
 \fB\-K\fR
@@ -67,19 +80,14 @@ Shows memory statistics
 Shows caching stats
 .RE
 .PP
-\fB\-s\fR
+\fB\-l\fR lockfile
 .RS 4
-only scans the file system
+create an exclusive lock (to avoid overruning)
 .RE
 .PP
-\fB\-5\fR
+\fB\-m\fR
 .RS 4
-use MD5 for hashes
-.RE
-.PP
-\fB\-S\fR
-.RS 4
-use SHA256 for hashes
+Shows memory statistics
 .RE
 .PP
 \fB\-q\fR
@@ -87,9 +95,14 @@ use SHA256 for hashes
 quiet mode
 .RE
 .PP
-\fB\-v\fR
+\fB\-S\fR
 .RS 4
-verbose mode
+use SHA256 for hashes
+.RE
+.PP
+\fB\-s\fR
+.RS 4
+only scans the file system
 .RE
 .PP
 \fB\-V\fR
@@ -97,9 +110,14 @@ verbose mode
 show version info
 .RE
 .PP
-\fB\-h\fR
+\fB\-v\fR
 .RS 4
-show help information
+verbose mode
+.RE
+.PP
+\fB\-I\fR pattern
+.RS 4
+Add an exclude pattern\&. (Start with "/" for a full path match\&. End with "/" to match directories only)
 .RE
 .SH "HEURISTICS"
 .sp
@@ -172,8 +190,53 @@ sort all matching i\-nodes by date\&. Hard link all i\-nodes to the oldest one\&
 .RE
 .sp
 When comparing files, the file permisison modes, user and group ownership are used as distinguishing features\&. The reason is that \fBundup(1)\fR is intended to be use for \fBlive\fR filesytems\&. In that situation, we want to preserver permissions and file ownerships accross deduplicated i\-nodes\&.
+.SH "HASHES"
 .sp
-\fBundup(1)\fR uses MD5 for the checksum by default, but it has the option to use SHA256 checksums\&.
+\fBundup(1)\fR uses MD5 for the checksum by default\&. The following hashes are available (with the \-H option):
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+md5 (Option \-5)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+md2
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+sha1
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+sha256 (Option \-S)
+.RE
 .SH "AUTHOR"
 .PP
 \fBA Liu Ly\fR
