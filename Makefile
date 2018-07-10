@@ -128,15 +128,20 @@ undup: vcheck $(OBJS) main.o $(GDBM_DEP)
 vcheck:
 	: VCHECK
 	if type git ; then \
-	  vname="$$(git describe --dirty=_Exp)" ; \
-	  if [ -n "$$vname" ] ; then \
-	    echo "const char version[] = \"$$vname\";" > version.h.t ;\
-	    if cmp version.h.t version.h ; then \
-	      rm -f version.h.t ; \
-	    else \
-	      mv version.h.t version.h ; \
-	    fi ;\
-	  fi ;\
+		if [ -d .git ] ; then \
+			: Check submodules ; \
+			git submodule update --init --recursive ; \
+			: Check version ; \
+			vname="$$(git describe --dirty=_Exp)" ; \
+			if [ -n "$$vname" ] ; then \
+				echo "const char version[] = \"$$vname\";" > version.h.t ;\
+				if cmp version.h.t version.h ; then \
+					rm -f version.h.t ; \
+				else \
+					mv version.h.t version.h ; \
+				fi ;\
+			fi ;\
+		fi ; \
 	fi
 
 # pull in dependancy...
