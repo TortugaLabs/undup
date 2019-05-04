@@ -25,6 +25,12 @@ make realclean
 make EMBED_GDBM=1 LXFLAGS=-static prod
 tar zcvf undup-$VTAG.bin-$(uname -m).tar.gz undup undup.1
 
+echo Trying to create BINARY tarball using musl...
+make realclean
+ls -sh
+docker exec -t void make -C hostrepo EMBED_GDBM=1 LXFLAGS=-static prod
+ls -sh
+
 echo "ASSETS..."
 ls -sh undup-*.tar.gz
 
