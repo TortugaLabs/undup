@@ -23,7 +23,10 @@ tar zcf undup-$VTAG.tar.gz undup-$VTAG
 echo Creating BINARY tarball
 make realclean
 make EMBED_GDBM=1 LXFLAGS=-static prod
-tar zcvf undup-$VTAG.bin.tar.gz undup undup.1
+tar zcvf undup-$VTAG.bin-$(uname -m).tar.gz undup undup.1
+
+echo "ASSETS..."
+ls -sh undup-*.tar.gz
 
 exit 0
 

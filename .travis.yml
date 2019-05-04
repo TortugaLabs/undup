@@ -1,6 +1,9 @@
 language: c
 compiler: gcc
-sudo: required
+env:
+  global:
+  - MUSL_TAG=2019042701
+sudo: false
 script: scripts/travis-script
 deploy:
   provider: releases
@@ -14,6 +17,10 @@ deploy:
   on:
     repo: TortugaLabs/undup
     tags: true
+
+install:
+- docker pull voidlinux/masterdir-x86_64-musl:$MUSL_TAG
+- docker run -d --name void -v "$(pwd)":/hostrepo -v /tmp:/tmp -e PATH="$PATH" voidlinux/masterdir-x86_64-musl:$MUSL_TAG /bin/sh -c 'sleep inf'
 
 notifications:
   email: false
