@@ -170,8 +170,20 @@ This project makes use of [TravisCI](https://travis-ci.org/).  You can
 find the build status page
 [here](https://travis-ci.org/TortugaLabs/undup).
 
+Releases are done using [TravisCI](https://travis-ci.org/).  Steps:
+
+1. Update Change log in `README.md`
+2. Update `version.h` to the new version.
+3. Commit and push changes to [github](https://github.com)
+4. Check in [TravisCI](https://travis-ci.org/) that build is succesful.
+5. Create a new tag:
+   - `git tag -a x.y.z -m x.y.z`
+   - `git push --tags`
+
 ## Changes
 
+* 2.2.3: WIP
+  - updated documentation
 * 2.2.2: Minor updates
   - compile with musl
   - add option to build static binary
@@ -203,7 +215,6 @@ find the build status page
 
 ## TODO
 
-- Document release process
 - Read and display /proc/self/status
 - hcd file inside directory tree
 
