@@ -15,7 +15,12 @@
  *    You should have received a copy of the GNU General Public License along
  *    with this program; if not, see <http://www.gnu.org/licenses>
  */
+#ifdef __GLIBC__
 #include <mcheck.h>
+#else
+#define mtrace()
+#define muntrace()
+#endif
 #include <cu.h>
 #include <unistd.h>
 #include "utils.h"

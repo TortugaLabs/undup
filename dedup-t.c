@@ -143,8 +143,10 @@ static void dedup_test(const char *msg,char *base) {
 
 TEST(dedup_undup1) {
   hash_set(CH_HASH_TYPE);
+#ifdef __GLIBC__
   struct mallinfo m1, m2;
   m1 = mallinfo();
+#endif
 
   static const char bytes[]="abcdefghijklmopqrstuvwxyzABCDEFGHIJKLMOPQRSTUVWXYZ0123456789";
   char *base, tpl[] = "/tmp/tmpdirXXXXXXX", buf[BLKSZ*3];
@@ -194,6 +196,8 @@ TEST(dedup_undup1) {
 
   rm_rf(base);
 
+#ifdef __GLIBC__
   m2 = mallinfo();
   assertEquals(m1.uordblks,m2.uordblks);
+#endif
 }

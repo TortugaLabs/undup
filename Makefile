@@ -74,7 +74,7 @@ prod:
 		  [ x"$$c" != x"$$t" ] && make realclean ; \
 		fi ; \
 		echo $$t > _prod
-	make OPTIMIZ=-O3 LDFLAGS=-s all
+	make OPTIMIZ=-O3 LDFLAGS=-s LXFLAGS="$(LXFLAGS)" all
 
 debug:
 	# This macro checks that we have do not have prod build stuff
@@ -123,7 +123,7 @@ test: test.c $(OBJS) $(TESTS) $(GDBM_DEP)
 		test.c $(OBJS) $(TESTS) $(GDBM_LIBREF)
 
 undup: vcheck $(OBJS) main.o $(GDBM_DEP)
-	$(LD) $(LDFLAGS) $(CFLAGS) -o undup main.o $(OBJS) $(GDBM_LIBREF)
+	$(LD) $(LDFLAGS) $(LXFLAGS) $(CFLAGS) -o undup main.o $(OBJS) $(GDBM_LIBREF)
 
 vcheck:
 	: VCHECK

@@ -1,1 +1,4 @@
-"inodetab.c",69: one+one: links exceeded slots (1)
+cnt: 1 slots: 1 (1)
+hash ino: 1 4 8
+fpath: one
+"inodetab.c",80: one+one: links exceeded slots (1)

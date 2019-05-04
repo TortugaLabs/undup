@@ -20,6 +20,17 @@ echo 'const char version[] = "'"$VTAG"'";' > undup-$VTAG/version.h
 cat undup-$VTAG/version.h
 tar zcf undup-$VTAG.tar.gz undup-$VTAG
 
+echo Creating BINARY tarball
+make realclean
+make EMBED_GDBM=1 LXFLAGS=-static prod
+tar zcvf undup-$VTAG.bin.tar.gz undup undup.1
+
+exit 0
+
+#######################################################################
+# Disabled...
+#######################################################################
+
 if ! sudo true ; then
   echo "Exiting... the rest of the script requires sudo priviledges"
   exit 0

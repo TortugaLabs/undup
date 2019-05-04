@@ -20,6 +20,11 @@
 #include <string.h>
 #include <uthash.h>
 
+#define HASH_ADD_INO(head,intfield,add)                                          \
+    HASH_ADD(hh,head,intfield,sizeof(ino_t),add)
+#define HASH_FIND_INO(head,findint,out)                                          \
+    HASH_FIND(hh,head,findint,sizeof(ino_t),out)
+
 //
 // Implemented using UTHASH
 //
@@ -53,7 +58,7 @@ struct inodetab *inodetab_free(struct inodetab *tab) {
 }
 int inodetab_add(struct inodetab *tab,ino_t ino,char *fpath,int nlnks,time_t mtime) {
   struct _inodedat *s;
-  HASH_FIND_INT(tab->hash, &ino, s);
+  HASH_FIND_INO(tab->hash, &ino, s);
   if (s == NULL) {
     s = (struct _inodedat *)mymalloc(sizeof(struct _inodedat)+nlnks*sizeof(char *));
     s->inode = ino;
@@ -61,11 +66,17 @@ int inodetab_add(struct inodetab *tab,ino_t ino,char *fpath,int nlnks,time_t mti
     s->cnt = 0;
     s->slots = nlnks;
     memset(s->paths,0,sizeof(char *)*(nlnks+1));
-    HASH_ADD_INT(tab->hash, inode, s);
+    HASH_ADD_INO(tab->hash, inode, s);
   }
   if (s->cnt < s->slots) {
     s->paths[s->cnt++] = mystrdup(fpath);
   } else {
+    int i;
+    fprintf(stderr,"cnt: %d slots: %d (%lu)\n", s->cnt, s->slots, (long unsigned)ino);
+    fprintf(stderr,"hash ino: %lu %lu %lu\n", (long unsigned)s->inode,sizeof(unsigned), sizeof(ino_t));
+    for (i=0;i<s->cnt;i++) {
+      fprintf(stderr,"fpath: %s\n", s->paths[i]);
+    }
     fatal(EXIT_FAILURE,"%s: links exceeded slots (%d)", fpath, s->slots);
   }
   //fprintf(stderr,"ADD: %s (%d - %lx)\n",fpath, s->cnt, (unsigned long)s);
@@ -74,7 +85,7 @@ int inodetab_add(struct inodetab *tab,ino_t ino,char *fpath,int nlnks,time_t mti
 
 char **inodetab_get(struct inodetab *tab,ino_t ino,time_t *mtime) {
   struct _inodedat *s;
-  HASH_FIND_INT(tab->hash, &ino, s);
+  HASH_FIND_INO(tab->hash, &ino, s);
   if (s == NULL) return NULL;
   if (mtime) *mtime = s->mtime;
   return s->paths;

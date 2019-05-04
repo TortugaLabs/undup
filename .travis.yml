@@ -10,8 +10,11 @@ deploy:
   file_glob: true
   file:
    - undup-*.tar.gz
-   - alpine-v*.apk
+   #~ - alpine-v*.apk
   on:
     repo: TortugaLabs/undup
     tags: true
+
+notifications:
+  email: false
 

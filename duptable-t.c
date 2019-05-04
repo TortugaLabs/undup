@@ -42,9 +42,10 @@ TEST(duptable_checked) {
   struct stat stb;
   int cnt;
   ino_t *inos;
+#ifdef __GLIBC__
   struct mallinfo m1, m2;
-
   m1 = mallinfo();
+#endif
 
   dt = duptab_new();
   assertTrue(dt);
@@ -151,8 +152,10 @@ TEST(duptable_checked) {
 	       0,NULL);
   duptab_free(dt);
 
+#ifdef __GLIBC__
   m2 = mallinfo();
   assertEquals(m1.uordblks,m2.uordblks);
+#endif
 }
 
 TEST(duptable_output) {
@@ -189,9 +192,10 @@ TEST(duptable_output) {
 TEST(duptable_large) {
   struct duptab *dt;
   struct stat stb;
+#ifdef __GLIBC__
   struct mallinfo m1, m2;
-
   m1 = mallinfo();
+#endif
   dt = duptab_new();
   for (int j=0;j < MAX_ITEMS; j++) {
     int size = rand() % CLUSTER;
@@ -212,6 +216,8 @@ TEST(duptable_large) {
   }
   duptab_sort(dt);
   duptab_free(dt);
+#ifdef __GLIBC__
   m2 = mallinfo();
   assertEquals(m1.uordblks,m2.uordblks);
+#endif
 }

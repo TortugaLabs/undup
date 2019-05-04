@@ -20,7 +20,12 @@
 #include "dedup.h"
 #include "utils.h"
 #ifdef _DEBUG
+#ifdef __GLIBC__
 #include <mcheck.h>
+#else
+#define mtrace()
+#define muntrace()
+#endif
 #endif
 #include "calchash.h"
 #include <malloc.h>
@@ -61,8 +66,8 @@ struct fscncb_t {
 };
 
 static int catcb1(char *dir, char *file,struct stat *stdat,FILE *fp) {
-  fprintf(fp, "%d %s %03o n:%d u:%d g:%d s:%llu b:%d ts:%d %s%s%s\n",
-	  (int)stdat->st_ino, filetype(stdat->st_mode),
+  fprintf(fp, "%lu %s %03o n:%d u:%d g:%d s:%llu b:%d ts:%d %s%s%s\n",
+	  (unsigned long)stdat->st_ino, filetype(stdat->st_mode),
 	  stdat->st_mode & ~S_IFMT,
 	  (int)stdat->st_nlink, stdat->st_uid, stdat->st_gid,
 	  (unsigned long long)stdat->st_size, (int)stdat->st_blocks,
@@ -224,6 +229,7 @@ int undup_main(int argc,char **argv) {
       break;
     case 'V':
       show_version();
+      break;
     case 'h':
     case '?':
     default: /* '?' */
@@ -305,7 +311,7 @@ int undup_main(int argc,char **argv) {
       // *-v*::
       //    verbose mode
       fputs("\t-X pattern: exclude pattern\n",stderr);
-      // *-I* pattern::
+      // *-X* pattern::
       //    Add an exclude pattern.  (Start with "/" for a full path
       //    match.  End with "/" to match directories only)
       //
@@ -328,7 +334,7 @@ int undup_main(int argc,char **argv) {
       // When comparing files, the file permisison modes, user and group
       // ownership are used as distinguishing features.
       // The reason is that *undup(1)* is intended to be use for *live*
-      // filesytems.  In that situation, we want to preserver permissions
+      // filesytems.  In that situation, we want to preserve permissions
       // and file ownerships accross deduplicated i-nodes.
       //
       // == HASHES

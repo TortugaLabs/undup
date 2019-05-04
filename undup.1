@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: undup
 .\"    Author: A Liu Ly
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 2018-06-11
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 2019-04-10
 .\"    Manual: User commands
 .\"    Source: undup.c 2.0
 .\"  Language: English
 .\"
-.TH "UNDUP" "1" "2018\-06\-11" "undup\&.c 2\&.0" "User commands"
+.TH "UNDUP" "1" "2019\-04\-10" "undup\&.c 2\&.0" "User commands"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -115,7 +115,7 @@ show version info
 verbose mode
 .RE
 .PP
-\fB\-I\fR pattern
+\fB\-X\fR pattern
 .RS 4
 Add an exclude pattern\&. (Start with "/" for a full path match\&. End with "/" to match directories only)
 .RE
@@ -189,7 +189,7 @@ calculate the hash of each file
 sort all matching i\-nodes by date\&. Hard link all i\-nodes to the oldest one\&.
 .RE
 .sp
-When comparing files, the file permisison modes, user and group ownership are used as distinguishing features\&. The reason is that \fBundup(1)\fR is intended to be use for \fBlive\fR filesytems\&. In that situation, we want to preserver permissions and file ownerships accross deduplicated i\-nodes\&.
+When comparing files, the file permisison modes, user and group ownership are used as distinguishing features\&. The reason is that \fBundup(1)\fR is intended to be use for \fBlive\fR filesytems\&. In that situation, we want to preserve permissions and file ownerships accross deduplicated i\-nodes\&.
 .SH "HASHES"
 .sp
 \fBundup(1)\fR uses MD5 for the checksum by default\&. The following hashes are available (with the \-H option):

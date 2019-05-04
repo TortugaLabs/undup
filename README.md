@@ -19,8 +19,9 @@ alternatives referred here) is the use of file to cache hashes.
 
 ## Install
 
-**undup** is distributed in source form and as an
-[AlpineLinux](http://www.alpinelinux.org) x86_64 package.  The _recommended_
+**undup** is distributed in source form and a tarball containing
+a statically linked executable.
+The _recommended_
 way to install **undup** is to compile from source code.
 
 To compile **undup** you need a **gcc-4.8** compiler.  I have only tested
@@ -29,11 +30,18 @@ building it with :
 - [Centos-7](https://www.centos.org/)
 - [AlpineLinux](http://www.alpinelinux.org)
 - [Ubuntu](http://www.ubuntu.com/)
+- [Void Linux](http://voidlinux.org/)
 
 Download the source from GitHub and enter:
 
 ```
 make prod
+```
+
+For static build:
+
+```
+make EMBED_GDBM=1 LXFLAGS=-static prod
 ```
 
 Then you can copy the resulting `undup` binary files to the
@@ -43,6 +51,11 @@ provided `undup.1` man page to the appropriate location.
 I also the include the `XBUILD` script to create an executable for the
 _ARM_ architecture which I use in my NAS device.  Customize this file
 to taste.
+
+### Build Options
+
+- EMBED_GDBM=1 : Link with an embedded gdbm library
+- LXFLAGS=-static : Build static binary
 
 ## Documentation
 
@@ -159,6 +172,11 @@ find the build status page
 
 ## Changes
 
+* 2.2.2: Minor updates
+  - compile with musl
+  - add option to build static binary
+  - inode in catalogue is unsigned
+  - removing alpine releases in favor for a single static release
 * 2.2.1: Maintenance release
   - Code clean-ups
   - Updating `alpine linux` release to v3.8.
@@ -171,7 +189,7 @@ find the build status page
 * 2.1.0:
   - Updated Makefile so it is also possible to build using the current
     os libgdbm instead of the embedded copy using:
-	- make GDBM_UNPACK=: GDBM_DEP= GDBM_REF=-lgdbm prod
+      - make GDBM_UNPACK=: GDBM_DEP= GDBM_REF=-lgdbm prod
   - Upgrading gdbm to v1.12  
 * 2.0.2:
   - Automatically update version display
@@ -182,6 +200,12 @@ find the build status page
 * 2.0.0: C rewrite
   - Re-wrote it in C
 * 1.0.0: Initial PHP release
+
+## TODO
+
+- Document release process
+- Read and display /proc/self/status
+- hcd file inside directory tree
 
 ## License
 

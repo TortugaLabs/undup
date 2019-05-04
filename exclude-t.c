@@ -21,8 +21,8 @@
 #include <malloc.h>
 #include <string.h>
 #include <utlist.h>
+#include <stdio.h>
 
-//~ #include <stdio.h>
 //~ #include <stdlib.h>
 
 TEST(exclude_leaktest) {
@@ -34,19 +34,23 @@ TEST(exclude_leaktest) {
     "one??two",
     NULL,
   };
-  struct mallinfo m1, m2;
   char **ptr = pats;
   struct excludes_t *tab = NULL;
+#ifdef __GLIBC__
+  struct mallinfo m1, m2;
 
   m1 = mallinfo();
+#endif
 
   while (*ptr) {
     tab = excludes_add(tab, *ptr, EXCLUDES_EXCLUDE);
     ++ptr;
   }
   excludes_free(tab);
+#ifdef __GLIBC__
   m2 = mallinfo();
   assertEquals(m1.uordblks,m2.uordblks);
+#endif
 }
 
 TEST(exclude_strcmp_or_fnmatch) {
@@ -70,7 +74,9 @@ TEST(exclude_strcmp_or_fnmatch) {
 
 
 TEST(exclude_matches) {
+#ifdef __GLIBC__
   struct mallinfo m1, m2;
+#endif
   struct excludes_t *tab = NULL;
   static struct stat filebuf, dirbuf;
   struct stat *file = &filebuf, *dir = &dirbuf;
@@ -78,7 +84,9 @@ TEST(exclude_matches) {
   memset(dir, 0, sizeof *dir);
   dirbuf.st_mode = S_IFDIR;
 
+#ifdef __GLIBC__
   m1 = mallinfo();
+#endif
 
   tab = excludes_add(tab, ".git", EXCLUDES_EXCLUDE | EXCLUDES_MATCHDIR);
   tab = excludes_add(tab, "*.srm", EXCLUDES_EXCLUDE);
@@ -119,6 +127,8 @@ TEST(exclude_matches) {
   CKIF_SKIP_DIR("xyz/abc","sdkfjsdf");
 
   excludes_free(tab);
+#ifdef __GLIBC__
   m2 = mallinfo();
   assertEquals(m1.uordblks,m2.uordblks);
+#endif
 }
