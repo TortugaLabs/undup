@@ -23,14 +23,16 @@ tar zcf undup-$VTAG.tar.gz undup-$VTAG
 echo Creating BINARY tarball
 make realclean
 make EMBED_GDBM=1 LXFLAGS=-static prod
-tar zcvf undup-$VTAG.bin-$(uname -m).tar.gz undup undup.1
+tar zcvf undup-$VTAG.bin-$(uname -m),glibc.tar.gz undup undup.1
 
 echo Trying to create BINARY tarball using musl...
 make realclean
 docker exec -t void make -C hostrepo EMBED_GDBM=1 LXFLAGS=-static prod
 tar zcvf undup-$VTAG.bin-$(uname -m),musl.tar.gz undup undup.1
 
-echo "ASSETS..."
+echo "======"
+echo "ASSETS"
+echo "======"
 ls -sh undup-*.tar.gz
 
 
