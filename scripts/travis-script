@@ -27,23 +27,22 @@ tar zcvf undup-$VTAG.bin-$(uname -m).tar.gz undup undup.1
 
 echo Trying to create BINARY tarball using musl...
 make realclean
-ls -sh
 docker exec -t void make -C hostrepo EMBED_GDBM=1 LXFLAGS=-static prod
-ls -sh
+tar zcvf undup-$VTAG.bin-$(uname -m),musl.tar.gz undup undup.1
 
 echo "ASSETS..."
 ls -sh undup-*.tar.gz
 
-exit 0
 
-#######################################################################
-# Disabled...
-#######################################################################
 
 if ! sudo true ; then
   echo "Exiting... the rest of the script requires sudo priviledges"
   exit 0
 fi
+#######################################################################
+# Disabled...
+#######################################################################
+exit 0
 
 rmount() {
   local chrootdir="$1" d
