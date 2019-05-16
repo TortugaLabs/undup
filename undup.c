@@ -227,6 +227,9 @@ int undup_main(int argc,char **argv) {
       }
       excludes = excludes_add(excludes, optarg, ex_flags);
       break;
+    case 'P':
+      gopts.show_proc_status = 1;
+      break;
     case 'V':
       show_version();
       break;
@@ -314,6 +317,9 @@ int undup_main(int argc,char **argv) {
       // *-X* pattern::
       //    Add an exclude pattern.  (Start with "/" for a full path
       //    match.  End with "/" to match directories only)
+      fputs("\t-P: print /proc/self/status\n",stderr);
+      // *-P*:
+      //    Print /proc/self/status when the program finishes.
       //
       // == HEURISTICS
       //
@@ -414,7 +420,15 @@ int undup_main(int argc,char **argv) {
 	     hits * 100 / (hits + misses));
     }
   }
-
+  if (gopts.show_proc_status) {
+    FILE *fp;
+    int ch;
+    fp = fopen("/proc/self/status",r);
+    while (ch = getc(fp)) {
+      putchar(ch);
+    }
+    fclose(fp);
+  }
 #ifdef MSTATS
   if (gopts.mstats) {
     struct mallinfo mi;
