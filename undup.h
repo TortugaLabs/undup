@@ -26,6 +26,7 @@ struct undup_opts {
   int cstats;
   int verbose;
   int scanonly;
+  int show_proc_status;
 };
 extern struct undup_opts gopts;
 
