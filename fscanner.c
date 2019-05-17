@@ -76,6 +76,9 @@ void fscanner(struct fs_dat *dat, struct cat_cb *cb) {
       if (lstat(fpath,&stbuf) == -1) errormsg("lstat(%s)",fpath);
       free(fpath);
 
+      // Make sure that we always ignore the caches...
+
+      if (cdir[0] == 0 && !strcmp(".hcd",dp->d_name)) continue;
       // Catalogue and check exclusion table...
       if (cb) {
 	if (cb->callback(cdir, dp->d_name, &stbuf, cb->ext)) continue;

@@ -171,7 +171,7 @@ int undup_main(int argc,char **argv) {
   gopts.verbose = 1;
   hash_set(CH_HASH_TYPE);
 
-  while ((opt = getopt(argc,argv,"h?Vqv5SemCKsc:l:I:X:H:")) != -1) {
+  while ((opt = getopt(argc,argv,"h?Vqv5SemCPKsc:l:I:X:H:")) != -1) {
     switch (opt) {
     case 'c':
       if (catfp) fclose(catfp);
@@ -423,8 +423,8 @@ int undup_main(int argc,char **argv) {
   if (gopts.show_proc_status) {
     FILE *fp;
     int ch;
-    fp = fopen("/proc/self/status",r);
-    while (ch = getc(fp)) {
+    fp = fopen("/proc/self/status","r");
+    while ((ch = getc(fp)) != EOF) {
       putchar(ch);
     }
     fclose(fp);
