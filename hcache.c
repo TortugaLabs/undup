@@ -20,6 +20,7 @@
 #include <gdbm.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <dirent.h>
 
 /*
  * Validating means we run through the filesystem and make sure
@@ -66,6 +67,15 @@ struct hcache_key {
   int cktype;
 };
 
+static int is_dir(const char *name) {
+  DIR *dp = opendir(name);
+  if (dp != NULL) {
+    closedir(dp);
+    return 1;
+  }
+  return 0;
+}
+
 static datum _hcache_genkey(struct hcache *cache,struct stat *st) {
   datum key;
   struct hcache_key *sk = mymalloc(sizeof(struct hcache_key));
@@ -94,7 +104,7 @@ void hcache_stats(struct hcache *cache,int *hits, int *misses){
 
 struct hcache *hcache_new(const char *base,int type,int len) {
   struct hcache *cache = (struct hcache *)mymalloc(sizeof(struct hcache));
-  char *cachefile = mystrcat(base,"/.hcd");
+  char *cachefile = mystrcat(base, is_dir(base) ? "/.hcd" : ".hcd");
 
   memset(cache,0,sizeof(struct hcache));
   cache->path = cachefile;
