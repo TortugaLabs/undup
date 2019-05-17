@@ -1,6 +1,6 @@
 = UNDUP(1)
 :doctype:	manpage
-:Date:	2019-04-10
+:Date:	2019-05-17
 :man manual:	User commands
 :man source:	undup.c
 :Author: A Liu Ly
@@ -60,6 +60,8 @@ option *-e* (execute).
 *-X* pattern::
    Add an exclude pattern.  (Start with "/" for a full path
    match.  End with "/" to match directories only)
+*-P*:
+   Print /proc/self/status when the program finishes.
 
 == HEURISTICS
 

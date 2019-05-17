@@ -94,7 +94,7 @@ void hcache_stats(struct hcache *cache,int *hits, int *misses){
 
 struct hcache *hcache_new(const char *base,int type,int len) {
   struct hcache *cache = (struct hcache *)mymalloc(sizeof(struct hcache));
-  char *cachefile = mystrcat(base,".hcd");
+  char *cachefile = mystrcat(base,"/.hcd");
 
   memset(cache,0,sizeof(struct hcache));
   cache->path = cachefile;

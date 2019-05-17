@@ -182,8 +182,10 @@ Releases are done using [TravisCI](https://travis-ci.org/).  Steps:
 
 ## Changes
 
-* 2.2.3: WIP
+* 2.2.3: Minor update
   - updated documentation
+  - Added option '-P' to show process statistics (for debugging and VM sizing)
+  - hcache is inside the directory (better if the directory is a mounted filesystem)
 * 2.2.2: Minor updates
   - compile with musl
   - add option to build static binary
