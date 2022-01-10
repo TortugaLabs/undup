@@ -1,0 +1,45 @@
+name: create release artifacts
+on:
+  release:
+    types: [created]
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      ALPINELINUX_IMG: alpine:latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: set-up alpine build environment
+        run: |
+          docker pull ${{ env.ALPINELINUX_IMG }}
+          docker run -d --name alpine -v "$(pwd)":/hostrepo -v /tmp:/tmp ${{env.ALPINELINUX_IMG }} /bin/sh -c 'sleep inf'
+          docker exec -t alpine /bin/sh /hostrepo/scripts/setup-alpine.sh
+
+      - name: build glibc artifacts
+        run: |
+          make realclean
+          make EMBED_GDBM=1 LXFLAGS=-static prod
+          tar zcvf undup.bin-$(uname -m),glibc.tar.gz undup undup.1
+          make realclean
+
+      - name: build musl artifacts
+        run: |
+          : make realclean
+          : docker exec -t alpine make -C /hostrepo EMBED_GDBM=1 LXFLAGS=-static prod
+          : tar zcvf undup.bin-$(uname -m),musl.tar.gz undup undup.1
+          : make realclean
+
+      - name: clean-up docker containers
+        run: |
+          docker stop alpine
+          docker rm alpine
+
+      - name: upload artifacts
+        run: |
+          ls -l undup.bin-*.tar.gz
+          gh release upload --clobber $GITHUB_REF_NAME undup.bin-*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

@@ -1,5 +1,23 @@
---- lib/cu/cu-check-regressions	2018-06-08 08:02:31.291354107 +0000
-+++ cu-check-regressions	2018-06-08 08:05:48.619336048 +0000
+--- lib/cu/cu-check-regressions	2022-01-04 11:28:13.397968590 +0100
++++ cu-check-regressions	2022-01-04 11:29:54.565641847 +0100
+@@ -162,7 +162,7 @@
+                 self.lines += h.numLines()
+             else:
+                 self.omitted_lines += h.numLines()
+-            
++
+ 
+ 
+ class Parser:
+@@ -221,7 +221,7 @@
+ 
+         if PROGRESS_ON:
+             pr(MSG_BASE + "            \r", flush = True)
+-        
++
+     def getDiff(self):
+         return self.diff
+ 
 @@ -287,6 +287,7 @@
  
  def main(files):
@@ -12,7 +30,7 @@
                  MSGINFO(" -->", str(diff.numOmittedLines()) + " lines from diff omitted")
          else:
              MSGFAIL(" [", "FAILED", "]")
-+	    failures = failures + 1
++            failures = failures + 1
              if diff.numOmittedLines() > 0:
                  MSGINFO(" -->", str(diff.numOmittedLines()) + " lines from diff omitted")
              MSGINFO(" -->", "Diff has " + str(diff.numLines()) + " lines")
@@ -21,7 +39,7 @@
                          break;
                  dumpLines(lines, "   |", True, MAX_DIFF_LINES)
 +    if failures:
-+	sys.exit(1)
++      sys.exit(1)
  
  def usage():
      prnl("Usage: " + sys.argv[0] + " [ OPTIONS ] [ directory, [ directory, [ ... ] ] ]")

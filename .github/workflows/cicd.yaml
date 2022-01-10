@@ -1,0 +1,30 @@
+name: CI/CD checks
+
+on: [push]
+
+jobs:
+  cicd-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Install dependancies
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y libgdbm-dev
+    - name: standard check
+      run: |
+        make realclean
+        flags="GOPTZ=-O1"
+        make $flags debug && make $flags check
+    - name: embedded gdbm
+      run: |
+        make realclean
+        flags="GOPTZ=-O1 EMBED_GDBM=1"
+        make $flags debug && make $flags check
+    - name: static
+      run: |
+        make realclean
+        flags="GOPTZ=-O1 EMBED_GDBM=1 LXFLAGS=-static"
+        make $flags debug && make $flags check

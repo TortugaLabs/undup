@@ -1,6 +1,6 @@
 # undup
 
-[![Build Status](https://api.travis-ci.org/TortugaLabs/undup.png?branch=master)](http://travis-ci.org/TortugaLabs/undup)
+![cicd](https://github.com/TortugaLabs/undup/actions/workflows/cicd.yaml/badge.svg)
 
 Track duplicate files and merge them as hardlinks
 
@@ -166,22 +166,19 @@ Few alternatives:
 
 ## Continous Integration
 
-This project makes use of [TravisCI](https://travis-ci.org/).  You can
-find the build status page
-[here](https://travis-ci.org/TortugaLabs/undup).
+This project makes use of [github actions](https://github.com/features/actions).
+You can find the build status page [here](https://github.com/TortugaLabs/undup/actions).
 
-Releases are done using [TravisCI](https://travis-ci.org/).  Steps:
+Release steps:
 
 1. Update Change log in `README.md`
-2. Update `version.h` to the new version.
-3. Commit and push changes to [github](https://github.com)
-4. Check in [TravisCI](https://travis-ci.org/) that build is succesful.
-5. Create a new tag:
-   - `git tag -a x.y.z -m x.y.z`
-   - `git push --tags`
+2. Run:
+  - `./ghrelease -g x.y.z`
 
 ## Changes
 
+* 2.2.4: Infra changes
+  - switching from travis to [github actions](https://github.com/features/actions).
 * 2.2.3: Minor update
   - updated documentation
   - Added option '-P' to show process statistics (for debugging and VM sizing)
@@ -204,7 +201,7 @@ Releases are done using [TravisCI](https://travis-ci.org/).  Steps:
   - Updated Makefile so it is also possible to build using the current
     os libgdbm instead of the embedded copy using:
       - make GDBM_UNPACK=: GDBM_DEP= GDBM_REF=-lgdbm prod
-  - Upgrading gdbm to v1.12  
+  - Upgrading gdbm to v1.12
 * 2.0.2:
   - Automatically update version display
   - Some documentation clarification
@@ -217,8 +214,11 @@ Releases are done using [TravisCI](https://travis-ci.org/).  Steps:
 
 ## TODO
 
+- Create a github actions workflow to create release artifacts
 - Read and display /proc/self/status
 - hcd file inside directory tree
+- Fix mem leak
+- Migrate to gh-actions
 
 ## License
 
